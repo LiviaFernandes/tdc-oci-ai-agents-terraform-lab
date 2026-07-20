@@ -1,0 +1,5 @@
+# Copie este arquivo para terraform.tfvars e preencha com os seus dados.
+# Nao commite o terraform.tfvars (ja esta no .gitignore).
+
+compartment_id = "ocid1.compartment.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+region         = "us-chicago-1"

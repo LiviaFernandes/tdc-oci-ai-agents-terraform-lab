@@ -1,0 +1,24 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Vars com dados sensiveis / especificos da sua tenancy
+terraform.tfvars
+*.auto.tfvars
+
+# OCI / SSH
+*.pem
+*.key
+
+# OS
+.DS_Store
