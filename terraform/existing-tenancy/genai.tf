@@ -78,7 +78,7 @@ resource "oci_generative_ai_agent_tool" "custom" {
 
     api_schema {
       api_schema_input_location_type = "INLINE"
-      content = templatefile("${path.module}/../../assets/custom_tool_openapi.yaml.tftpl", {
+      content = templatefile("${path.module}/assets/custom_tool_openapi.yaml.tftpl", {
         api_base_url = var.custom_tool_api_url
       })
     }

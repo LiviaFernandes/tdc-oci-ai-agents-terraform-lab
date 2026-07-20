@@ -14,5 +14,5 @@ resource "oci_objectstorage_object" "rag_pdf" {
   namespace = data.oci_objectstorage_namespace.ns.namespace
   bucket    = oci_objectstorage_bucket.kb.name
   object    = "base_rag_tdc_floripa_2026.pdf"
-  source    = "${path.module}/../../assets/base_rag_tdc_floripa_2026.pdf"
+  source    = "${path.module}/assets/base_rag_tdc_floripa_2026.pdf"
 }
