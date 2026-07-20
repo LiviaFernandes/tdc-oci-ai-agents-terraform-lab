@@ -10,7 +10,7 @@ Este projeto contém o material de apoio para subir, via Terraform, um agente de
 - programação real do TDC Floripa 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
-O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. A diferença para uma configuração manual é que aqui você não cria recurso por recurso no Console: sobe uma Stack, preenche algumas variáveis e o Terraform cuida de criar compartment, grupo, policy, rede, bucket, Knowledge Base, agent, tools e endpoint, nessa ordem.
+O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. A diferença para uma configuração manual é que aqui você não cria recurso por recurso no Console: sobe uma Stack no Resource Manager, que já vem com tenancy, usuário e região preenchidos automaticamente pela sua sessão, e o Terraform cuida de criar compartment, grupo, policy, rede, bucket, Knowledge Base, agent, tools e endpoint, nessa ordem.
 
 ## Demo do lab
 
@@ -109,20 +109,9 @@ Isso gera `tdc-ai-agents-trial.zip` na raiz do repositório, já com os arquivos
 
 ## 3. Preencher as variáveis
 
-O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. Preencha:
+O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As três variáveis obrigatórias — `tenancy_ocid`, `current_user_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy, o usuário e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
 
-```text
-tenancy_ocid = ocid da sua tenancy
-user_ocid    = ocid do seu usuario
-region       = regiao com Generative AI Agents disponivel
-```
-
-Onde encontrar cada valor:
-
-- `tenancy_ocid`: no OCI Console, clique no seu perfil (canto superior direito) e depois em **Tenancy**.
-- `user_ocid`: no OCI Console, clique no seu perfil e depois em **User settings**.
-
-As demais variáveis (nome do compartment, nome do grupo, mensagens do agente, descrição das tools) já vêm preenchidas com valores padrão. Não precisa mexer nelas para rodar o lab, mas pode ajustar se quiser personalizar.
+As demais variáveis (nome do compartment, nome do grupo, mensagens do agente, descrição das tools, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab, mas pode ajustar se quiser personalizar algum texto do agente.
 
 Clique em **Next**, revise o resumo e siga em frente.
 
@@ -193,11 +182,13 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 
 | Variável | Descrição |
 | --- | --- |
-| `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. |
-| `user_ocid` | OCID do usuário que entra no grupo do lab, normalmente você mesma. |
-| `region` | Região OCI com Generative AI Agents disponível. |
+| `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
+| `current_user_ocid` | OCID do usuário que entra no grupo do lab. Auto-preenchida pelo Resource Manager com o usuário que está rodando a Stack. |
+| `region` | Região OCI com Generative AI Agents disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão. |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
+
+O auto-preenchimento só acontece porque os nomes `tenancy_ocid`, `current_user_ocid` e `region` são reservados pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os três à mão no `terraform.tfvars`.
 
 ## Custo, sem complicar
 
@@ -211,12 +202,15 @@ Para não deixar recursos ligados sem necessidade, destrua o lab quando terminar
 
 ## Rodando localmente, sem Resource Manager
 
-Se preferir não usar o Console, dá para rodar a mesma pasta com o Terraform local:
+Se preferir não usar o Console, dá para rodar a mesma pasta com o Terraform local. Aqui não existe auto-preenchimento, então você mesma busca os valores:
+
+- `tenancy_ocid`: no OCI Console, clique no seu perfil (canto superior direito) e depois em **Tenancy**.
+- `current_user_ocid`: no OCI Console, clique no seu perfil e depois em **User settings**.
 
 ```bash
 cd terraform/trial-tenancy
 cp terraform.tfvars.example terraform.tfvars
-# preencha tenancy_ocid, user_ocid e region no terraform.tfvars
+# preencha tenancy_ocid, current_user_ocid e region no terraform.tfvars
 terraform init
 terraform plan
 terraform apply

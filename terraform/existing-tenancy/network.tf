@@ -3,20 +3,20 @@
 # nem de Internet Gateway - o unico trafego e egress HTTPS da Custom Tool.
 
 resource "oci_core_vcn" "lab" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   cidr_blocks    = [var.vcn_cidr]
   display_name   = "tdc-ai-agents-vcn"
   dns_label      = "tdcaiagents"
 }
 
 resource "oci_core_nat_gateway" "lab" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.lab.id
   display_name   = "tdc-ai-agents-nat"
 }
 
 resource "oci_core_route_table" "private" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.lab.id
   display_name   = "tdc-ai-agents-private-rt"
 
@@ -27,7 +27,7 @@ resource "oci_core_route_table" "private" {
 }
 
 resource "oci_core_security_list" "private" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.lab.id
   display_name   = "tdc-ai-agents-private-sl"
 
@@ -38,7 +38,7 @@ resource "oci_core_security_list" "private" {
 }
 
 resource "oci_core_subnet" "private" {
-  compartment_id             = var.compartment_id
+  compartment_id             = var.compartment_ocid
   vcn_id                     = oci_core_vcn.lab.id
   cidr_block                 = var.private_subnet_cidr
   display_name               = "tdc-ai-agents-private-subnet"

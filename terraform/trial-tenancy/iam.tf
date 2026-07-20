@@ -12,7 +12,7 @@ resource "oci_identity_group" "lab_users" {
 
 resource "oci_identity_user_group_membership" "lab_user" {
   group_id = oci_identity_group.lab_users.id
-  user_id  = var.user_ocid
+  user_id  = var.current_user_ocid
 }
 
 # A policy do lab precisa viver no compartment root da tenancy, nao dentro

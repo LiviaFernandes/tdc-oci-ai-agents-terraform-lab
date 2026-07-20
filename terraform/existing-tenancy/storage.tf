@@ -1,9 +1,9 @@
 data "oci_objectstorage_namespace" "ns" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
 }
 
 resource "oci_objectstorage_bucket" "kb" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   namespace      = data.oci_objectstorage_namespace.ns.namespace
   name           = var.bucket_name
 }

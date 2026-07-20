@@ -1,15 +1,15 @@
 variable "tenancy_ocid" {
-  description = "OCID da tenancy trial. Em My profile > Tenancy, ou no topo do OCI Console."
+  description = "OCID da tenancy trial. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'tenancy_ocid'."
   type        = string
 }
 
-variable "user_ocid" {
-  description = "OCID do usuario que vai entrar no grupo do lab. Normalmente voce mesma, a dona da API key usada para rodar o Terraform. Em My profile > User information."
+variable "current_user_ocid" {
+  description = "OCID do usuario que vai entrar no grupo do lab. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'current_user_ocid' - e o usuario que esta rodando a Stack. Rodando localmente, pegue em My profile > User information."
   type        = string
 }
 
 variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel, por exemplo us-chicago-1 ou sa-saopaulo-1."
+  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel, por exemplo us-chicago-1 ou sa-saopaulo-1. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region'."
   type        = string
   default     = "us-chicago-1"
 }

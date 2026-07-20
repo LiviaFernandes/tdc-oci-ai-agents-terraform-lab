@@ -1,5 +1,5 @@
 resource "oci_generative_ai_agent_knowledge_base" "tdc" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   display_name   = "tdc-floripa-2026-kb"
   description    = "Base RAG com a visao geral, FAQ e jornadas do TDC Floripa 2026"
 
@@ -10,7 +10,7 @@ resource "oci_generative_ai_agent_knowledge_base" "tdc" {
 }
 
 resource "oci_generative_ai_agent_data_source" "tdc" {
-  compartment_id    = var.compartment_id
+  compartment_id    = var.compartment_ocid
   knowledge_base_id = oci_generative_ai_agent_knowledge_base.tdc.id
   display_name      = "tdc-floripa-2026-kb-source"
   description       = "Bucket com o PDF da base estatica do TDC Floripa 2026"
@@ -28,13 +28,13 @@ resource "oci_generative_ai_agent_data_source" "tdc" {
 }
 
 resource "oci_generative_ai_agent_data_ingestion_job" "tdc" {
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   data_source_id = oci_generative_ai_agent_data_source.tdc.id
   display_name   = "tdc-floripa-2026-ingestion"
 }
 
 resource "oci_generative_ai_agent_agent" "tdc" {
-  compartment_id  = var.compartment_id
+  compartment_id  = var.compartment_ocid
   display_name    = var.agent_display_name
   description     = "Agente que responde perguntas sobre o TDC Floripa 2026 usando RAG e uma Custom Tool"
   welcome_message = var.agent_welcome_message
@@ -49,7 +49,7 @@ resource "oci_generative_ai_agent_agent" "tdc" {
 # RAG Tool: perguntas gerais sobre o evento, respondidas a partir do PDF.
 resource "oci_generative_ai_agent_tool" "rag" {
   agent_id       = oci_generative_ai_agent_agent.tdc.id
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   display_name   = "consulta_base_tdc"
   description    = var.rag_tool_description
 
@@ -68,7 +68,7 @@ resource "oci_generative_ai_agent_tool" "rag" {
 # publica. Sem autenticacao, saindo pela subnet privada + NAT Gateway.
 resource "oci_generative_ai_agent_tool" "custom" {
   agent_id       = oci_generative_ai_agent_agent.tdc.id
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   display_name   = "consulta_programacao_tdc"
   description    = var.custom_tool_description
 
@@ -100,7 +100,7 @@ resource "oci_generative_ai_agent_tool" "custom" {
 # PII e prompt injection do endpoint.
 resource "oci_generative_ai_agent_agent_endpoint" "tdc" {
   agent_id       = oci_generative_ai_agent_agent.tdc.id
-  compartment_id = var.compartment_id
+  compartment_id = var.compartment_ocid
   display_name   = "tdc-floripa-2026-endpoint"
   description    = "Endpoint do Assistente TDC Floripa"
 

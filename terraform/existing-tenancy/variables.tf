@@ -1,10 +1,10 @@
-variable "compartment_id" {
-  description = "OCID de um compartment que voce ja tem acesso para criar rede, bucket, knowledge base, agent e tools. Esta versao nao cria compartment, grupo nem policy - use quando voce ja tem os acessos necessarios na tenancy."
+variable "compartment_ocid" {
+  description = "OCID de um compartment que voce ja tem acesso para criar rede, bucket, knowledge base, agent e tools. Esta versao nao cria compartment, grupo nem policy - use quando voce ja tem os acessos necessarios na tenancy. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'compartment_ocid', com o mesmo compartment escolhido na criacao da Stack."
   type        = string
 }
 
 variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel, por exemplo us-chicago-1 ou sa-saopaulo-1."
+  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel, por exemplo us-chicago-1 ou sa-saopaulo-1. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region'."
   type        = string
   default     = "us-chicago-1"
 }

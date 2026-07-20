@@ -1,6 +1,6 @@
 # Copie este arquivo para terraform.tfvars e preencha com os seus dados.
 # Nao commite o terraform.tfvars (ja esta no .gitignore).
 
-tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-user_ocid    = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-region       = "us-chicago-1"
+tenancy_ocid       = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+current_user_ocid  = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+region             = "us-chicago-1"
