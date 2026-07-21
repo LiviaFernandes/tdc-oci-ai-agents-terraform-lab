@@ -42,21 +42,16 @@ variable "public_subnet_cidr" {
   default     = "10.0.0.0/24"
 }
 
-variable "instance_shape" {
-  description = "Shape da VM. VM.Standard.A4.Flex (Ampere) e o padrao. Confira sua quota em Governance & Administration > Limits, Quotas and Usage antes de trocar - tenancies trial variam bastante em quais shapes vem com limite ja alocado; se 'Out of host capacity' ou limite zerado, veja ali qual shape tem OCPUs disponiveis e troque esta variavel."
-  type        = string
-  default     = "VM.Standard.A4.Flex"
-}
-
 variable "instance_ocpus" {
-  type    = number
-  default = 1
+  description = "OCPUs da VM. Usado tanto pra checar capacidade disponivel quanto pra criar a VM de fato."
+  type        = number
+  default     = 1
 }
 
 variable "instance_memory_in_gbs" {
-  description = "Memoria da VM em GB. 8 GB por OCPU e a proporcao padrao do A4.Flex."
+  description = "Memoria da VM em GB. 6 GB por OCPU e uma proporcao segura e compativel com os shapes candidatos (A4.Flex, A1.Flex, E4.Flex, E5.Flex)."
   type        = number
-  default     = 8
+  default     = 6
 }
 
 variable "app_port" {

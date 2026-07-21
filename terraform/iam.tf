@@ -14,15 +14,16 @@ resource "oci_identity_dynamic_group" "vm" {
   matching_rule  = "ALL {instance.compartment.id = '${oci_identity_compartment.lab.id}'}"
 }
 
-# A policy do lab precisa viver no compartment root da tenancy. O verbo
-# e "manage", nao "use" - e o que o servico Generative AI Inference exige
-# pra chamadas de chat via instance principal.
+# A policy do lab precisa viver no compartment root da tenancy. Estatutos
+# minimos pra chamada de chat via instance principal: usar o chat e ler
+# metadados do modelo, nada de "manage" no family inteiro.
 resource "oci_identity_policy" "lab_policy" {
   compartment_id = var.tenancy_ocid
   name           = var.policy_name
   description    = "Policy do laboratorio TDC AI Agents OCI"
 
   statements = [
-    "Allow dynamic-group ${oci_identity_dynamic_group.vm.name} to manage generative-ai-family in compartment ${oci_identity_compartment.lab.name}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.vm.name} to use generative-ai-chat in compartment ${oci_identity_compartment.lab.name}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.vm.name} to read generative-ai-model in compartment ${oci_identity_compartment.lab.name}",
   ]
 }

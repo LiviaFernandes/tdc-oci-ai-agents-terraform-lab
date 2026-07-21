@@ -120,7 +120,9 @@ De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init
 
 O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As duas variáveis obrigatórias — `tenancy_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
 
-As demais variáveis (shape e tamanho da VM, porta do app, modelo Cohere, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
+As demais variáveis (tamanho da VM, porta do app, modelo Cohere, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
+
+Não existe variável de shape: o Terraform consulta um Compute Capacity Report em cada Availability Domain da região e escolhe sozinho o primeiro shape com capacidade confirmada, testando nesta ordem: `VM.Standard.A4.Flex`, `VM.Standard.A1.Flex`, `VM.Standard.E4.Flex`, `VM.Standard.E5.Flex`. Isso evita o erro `Out of host capacity`, comum em tenancies trial onde a quota disponível varia de conta pra conta.
 
 Clique em **Next**, revise o resumo e siga em frente.
 
@@ -192,7 +194,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
 | `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
-| `instance_shape`, `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (`VM.Standard.A4.Flex`, 1 OCPU, 8 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. Tenancies trial variam bastante em qual shape já vem com quota alocada por padrão: se der `Out of host capacity` ou erro de limite, confira em **Governance & Administration > Limits, Quotas and Usage** (filtre por Compute) qual shape tem OCPUs disponíveis na sua conta e troque essa variável antes de rodar o Apply de novo. |
+| `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC Floripa fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo Cohere usado. O padrão é `cohere.command-r-08-2024`, mais barato; `cohere.command-r-plus-08-2024` responde melhor em perguntas mais complexas. |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
