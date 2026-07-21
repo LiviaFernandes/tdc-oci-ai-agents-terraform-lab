@@ -18,10 +18,11 @@ const IS_COHERE_MODEL = MODEL_ID.toLowerCase().startsWith("cohere.");
 const ragDocuments = require("./rag-documents.json");
 const RAG_CONTEXT_TEXT = ragDocuments.map((doc) => `## ${doc.title}\n${doc.snippet}`).join("\n\n");
 
-const DEFAULT_SYSTEM_PROMPT = `Voce e o Assistente TDC Floripa, um agente para orientar participantes sobre o TDC Floripa 2026.
+const DEFAULT_SYSTEM_PROMPT = `Voce e o Assistente TDC Floripa, um agente simpatico e prestativo para orientar participantes sobre o TDC Floripa 2026.
 Responda em portugues brasileiro, de forma clara, objetiva e educada.
+Cumprimentos e conversa informal (oi, ola, bom dia, tudo bem, obrigado) devem receber uma resposta natural e simpatica, contando brevemente com o que voce pode ajudar. Nunca diga que precisa chamar uma funcao ou tool para responder isso, e nunca recuse uma mensagem so porque ela nao pede uma acao especifica.
 Use os documentos de contexto para perguntas gerais sobre o evento, jornadas, formato, FAQ, regras e links oficiais.
-Use obrigatoriamente a tool consulta_programacao_tdc quando a pergunta pedir agenda, programacao, trilhas por dia, horarios, palestras, sessoes, speakers, nomes de pessoas ou busca por termo.
+Use obrigatoriamente a tool consulta_programacao_tdc quando a pergunta pedir agenda, programacao, trilhas por dia, horarios, palestras, sessoes, speakers, nomes de pessoas ou busca por termo - inclusive quando a pergunta for uma continuacao curta como "que dia" ou "que horas", usando o historico da conversa para entender a quem ou a qual sessao ela se refere.
 Nao invente horarios, speakers, valores ou regras que nao estejam no contexto ou na resposta da tool.`;
 
 // O system prompt vem de um arquivo em vez de variavel de ambiente porque
@@ -127,10 +128,26 @@ async function runToolCall(name, parameters) {
   return { error: `Tool desconhecida: ${name}` };
 }
 
-async function askAssistantCohere(userMessage) {
+function cohereHistoryFromTurns(history) {
+  return (history || []).map((turn) => ({
+    role: turn.role === "assistant" ? "CHATBOT" : "USER",
+    message: turn.text
+  }));
+}
+
+function genericMessagesFromTurns(history) {
+  return (history || []).map((turn) => ({
+    role: turn.role === "assistant" ? "ASSISTANT" : "USER",
+    content: [{ type: "TEXT", text: turn.text }]
+  }));
+}
+
+async function askAssistantCohere(userMessage, history) {
   const client = await getClient();
 
-  let chatHistory;
+  // Historico da conversa (perguntas e respostas anteriores) entra antes da
+  // mensagem nova, para o modelo entender continuacoes curtas tipo "que dia".
+  let chatHistory = cohereHistoryFromTurns(history);
   let toolResults;
   let finalText = "";
   let citations = [];
@@ -179,7 +196,7 @@ async function askAssistantCohere(userMessage) {
   };
 }
 
-async function askAssistantGeneric(userMessage) {
+async function askAssistantGeneric(userMessage, history) {
   const client = await getClient();
 
   const messages = [
@@ -187,6 +204,9 @@ async function askAssistantGeneric(userMessage) {
       role: "SYSTEM",
       content: [{ type: "TEXT", text: `${SYSTEM_PROMPT}\n\nContexto:\n\n${RAG_CONTEXT_TEXT}` }]
     },
+    // Historico da conversa (perguntas e respostas anteriores) entra antes da
+    // mensagem nova, para o modelo entender continuacoes curtas tipo "que dia".
+    ...genericMessagesFromTurns(history),
     {
       role: "USER",
       content: [{ type: "TEXT", text: userMessage }]
@@ -243,8 +263,10 @@ async function askAssistantGeneric(userMessage) {
   };
 }
 
-async function askAssistant(userMessage) {
-  return IS_COHERE_MODEL ? askAssistantCohere(userMessage) : askAssistantGeneric(userMessage);
+async function askAssistant(userMessage, history) {
+  return IS_COHERE_MODEL
+    ? askAssistantCohere(userMessage, history)
+    : askAssistantGeneric(userMessage, history);
 }
 
 const app = express();
@@ -262,8 +284,14 @@ app.post("/chat", async (req, res) => {
     return;
   }
 
+  const rawHistory = Array.isArray(req.body && req.body.history) ? req.body.history : [];
+  const history = rawHistory
+    .filter((turn) => turn && typeof turn.text === "string" && turn.text.trim())
+    .map((turn) => ({ role: turn.role === "assistant" ? "assistant" : "user", text: turn.text }))
+    .slice(-12);
+
   try {
-    const result = await askAssistant(userMessage);
+    const result = await askAssistant(userMessage, history);
     res.json(result);
   } catch (err) {
     console.error("Erro ao chamar o OCI Generative AI:", err);
