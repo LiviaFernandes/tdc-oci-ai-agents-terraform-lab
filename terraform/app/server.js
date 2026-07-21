@@ -70,24 +70,25 @@ const cohereTools = [
   }
 ];
 
-// Definicao da tool no formato Generic/OpenAI (JSON Schema em parameters).
+// Definicao da tool no formato Generic da OCI: name/description/parameters
+// ficam direto no objeto do tool, sem aninhar num sub-objeto "function"
+// como no formato cru da OpenAI. Confirmado no exemplo oficial do SDK
+// (FunctionDefinition estende ToolDefinition com esses campos direto).
 const genericTools = [
   {
     type: "FUNCTION",
-    function: {
-      name: TOOL_NAME,
-      description: TOOL_DESCRIPTION,
-      parameters: {
-        type: "object",
-        properties: {
-          q: { type: "string", description: "Termo de busca geral, como agentes, IA, arquitetura, Java, titulo ou nome de uma pessoa." },
-          speaker: { type: "string", description: "Nome do speaker ou parte do nome, por exemplo Ana Lindiner ou Livia Rodrigues." },
-          day: { type: "string", description: "Dia da programacao, por exemplo 22/jul, 23/jul ou 24/jul." },
-          track: { type: "string", description: "Nome ou parte do nome da trilha." },
-          limit: { type: "integer", description: "Quantidade maxima de resultados." }
-        },
-        required: []
-      }
+    name: TOOL_NAME,
+    description: TOOL_DESCRIPTION,
+    parameters: {
+      type: "object",
+      properties: {
+        q: { type: "string", description: "Termo de busca geral, como agentes, IA, arquitetura, Java, titulo ou nome de uma pessoa." },
+        speaker: { type: "string", description: "Nome do speaker ou parte do nome, por exemplo Ana Lindiner ou Livia Rodrigues." },
+        day: { type: "string", description: "Dia da programacao, por exemplo 22/jul, 23/jul ou 24/jul." },
+        track: { type: "string", description: "Nome ou parte do nome da trilha." },
+        limit: { type: "integer", description: "Quantidade maxima de resultados." }
+      },
+      required: []
     }
   }
 ];
