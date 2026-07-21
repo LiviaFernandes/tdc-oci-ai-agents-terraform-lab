@@ -9,9 +9,9 @@ variable "current_user_ocid" {
 }
 
 variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel, por exemplo us-chicago-1 ou sa-saopaulo-1. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region'."
+  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao escolhida na criacao da conta trial (ex: sa-saopaulo-1)."
   type        = string
-  default     = "us-chicago-1"
+  default     = "sa-saopaulo-1"
 }
 
 variable "compartment_name" {

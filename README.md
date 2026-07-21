@@ -75,26 +75,38 @@ Se você quiser apontar para a sua própria cópia da API, troque a variável `c
 
 ## Pré-requisitos
 
-- Conta OCI Trial ativa.
+- Conta OCI Trial ativa, com home region São Paulo (`sa-saopaulo-1`). Veja o passo 1 se você ainda não tem uma.
 - Acesso ao OCI Console.
-- Região com OCI Generative AI Agents disponível.
 - Permissão para criar compartment, policies, rede, bucket, knowledge base, agent e endpoint. O dono de uma tenancy trial já tem esse acesso por padrão, como administrator.
 - Acesso à internet para o agente consultar a API pública da programação.
 - O arquivo zip deste repositório, para subir como Stack no Resource Manager.
 
-## 1. Preparar o pacote da Stack
+## 1. Criar a conta trial OCI
 
-O Resource Manager sobe a partir de um `.zip` com os arquivos Terraform na raiz. Clone o repositório e gere o zip a partir da pasta `terraform/trial-tenancy`:
+Se você já tem uma tenancy trial, pule para o passo 2.
+
+1. Acesse [oracle.com/cloud/free](https://www.oracle.com/cloud/free/) e clique em **Start for free**.
+2. Preencha os dados pedidos (nome, email, país, telefone) e confirme o cadastro.
+3. Quando for pedida a home region, escolha **South America (São Paulo)** (`sa-saopaulo-1`). Essa escolha é definitiva: depois de criada, a tenancy não muda de home region.
+4. A Oracle manda um email confirmando a criação da conta, com o nome da sua tenancy (tenancy name). Guarde esse nome — é ele que você usa para logar, não o email.
+5. Acesse o Console em [cloud.oracle.com](https://cloud.oracle.com/) e faça login informando o tenancy name confirmado por email.
+6. No primeiro login, a OCI pede para configurar autenticação em duas etapas. Baixe um app autenticador no celular, como o Oracle Mobile Authenticator, escaneie o QR code mostrado na tela e confirme o código gerado para concluir o login.
+
+Com a conta criada e o primeiro login feito, siga para o restante do lab.
+
+## 2. Preparar o pacote da Stack
+
+O Resource Manager sobe a partir de um `.zip` com os arquivos Terraform na raiz. Clone o repositório e gere o zip a partir da pasta `terraform`:
 
 ```bash
 git clone https://github.com/LiviaFernandes/tdc-oci-ai-agents-terraform-lab.git
-cd tdc-oci-ai-agents-terraform-lab/terraform/trial-tenancy
-zip -r ../../tdc-ai-agents-trial.zip .
+cd tdc-oci-ai-agents-terraform-lab/terraform
+zip -r ../tdc-ai-agents-trial.zip .
 ```
 
 Isso gera `tdc-ai-agents-trial.zip` na raiz do repositório, já com os arquivos `.tf` e a pasta `assets/` (o PDF da base RAG e o contrato OpenAPI da Custom Tool) no lugar certo.
 
-## 2. Criar a Stack
+## 3. Criar a Stack
 
 1. Abra o OCI Console.
 2. Vá em **Developer Services**.
@@ -107,7 +119,7 @@ Isso gera `tdc-ai-agents-trial.zip` na raiz do repositório, já com os arquivos
 9. Dê um nome para a stack, por exemplo `tdc-ai-agents-lab`.
 10. Clique em **Next**.
 
-## 3. Preencher as variáveis
+## 4. Preencher as variáveis
 
 O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As três variáveis obrigatórias — `tenancy_ocid`, `current_user_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy, o usuário e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
 
@@ -115,7 +127,7 @@ As demais variáveis (nome do compartment, nome do grupo, mensagens do agente, d
 
 Clique em **Next**, revise o resumo e siga em frente.
 
-## 4. Rodar o Apply
+## 5. Rodar o Apply
 
 Marque **Run apply** na criação da stack, ou rode um Apply depois, na tela da Stack.
 
@@ -136,11 +148,11 @@ Agent Endpoint
 
 Costuma levar entre 5 e 10 minutos, a maior parte do tempo é a criação da Knowledge Base e do endpoint. Quando o status da Stack virar **Succeeded**, o lab está pronto.
 
-## 5. Conferir os outputs
+## 6. Conferir os outputs
 
 Na Stack, vá na aba **Outputs**. Lá estão os IDs de cada recurso criado e uma dica de onde clicar no Console para abrir o chat do agente.
 
-## 6. Testar no chat
+## 7. Testar no chat
 
 Abra o OCI Console em **Analytics & AI > Generative AI Agents > Agent endpoints**, clique no endpoint criado e depois em **Launch chat**.
 
@@ -178,13 +190,13 @@ Resultado esperado: o agente usa a Custom Tool para buscar sessões do dia 24/ju
 
 ## Variáveis principais
 
-Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/trial-tenancy/variables.tf`, se você preferir rodar localmente):
+Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/variables.tf`, se você preferir rodar localmente):
 
 | Variável | Descrição |
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
 | `current_user_ocid` | OCID do usuário que entra no grupo do lab. Auto-preenchida pelo Resource Manager com o usuário que está rodando a Stack. |
-| `region` | Região OCI com Generative AI Agents disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão. |
+| `region` | Região OCI com Generative AI Agents disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 
@@ -208,7 +220,7 @@ Se preferir não usar o Console, dá para rodar a mesma pasta com o Terraform lo
 - `current_user_ocid`: no OCI Console, clique no seu perfil e depois em **User settings**.
 
 ```bash
-cd terraform/trial-tenancy
+cd terraform
 cp terraform.tfvars.example terraform.tfvars
 # preencha tenancy_ocid, current_user_ocid e region no terraform.tfvars
 terraform init
