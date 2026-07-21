@@ -43,9 +43,9 @@ variable "public_subnet_cidr" {
 }
 
 variable "instance_shape" {
-  description = "Shape da VM. VM.Standard.A1.Flex (Ampere/ARM) e o padrao porque e o shape com mais capacidade de sobra em tenancy trial - e o mesmo elegivel ao Always Free. O trabalho pesado (o modelo) roda no OCI Generative AI, nao na VM, entao nao precisa de muito OCPU/memoria aqui. Se der 'Out of host capacity', troque para VM.Standard.E4.Flex ou VM.Standard.E5.Flex e rode o Apply de novo."
+  description = "Shape da VM. VM.Standard.A4.Flex (Ampere) e o padrao. Confira sua quota em Governance & Administration > Limits, Quotas and Usage antes de trocar - tenancies trial variam bastante em quais shapes vem com limite ja alocado; se 'Out of host capacity' ou limite zerado, veja ali qual shape tem OCPUs disponiveis e troque esta variavel."
   type        = string
-  default     = "VM.Standard.A1.Flex"
+  default     = "VM.Standard.A4.Flex"
 }
 
 variable "instance_ocpus" {
@@ -54,9 +54,9 @@ variable "instance_ocpus" {
 }
 
 variable "instance_memory_in_gbs" {
-  description = "Memoria da VM em GB. 6 GB por OCPU e a proporcao padrao do Always Free em A1.Flex."
+  description = "Memoria da VM em GB. 8 GB por OCPU e a proporcao padrao do A4.Flex."
   type        = number
-  default     = 6
+  default     = 8
 }
 
 variable "app_port" {

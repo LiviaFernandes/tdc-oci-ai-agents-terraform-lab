@@ -192,7 +192,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
 | `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
-| `instance_shape`, `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (`VM.Standard.A1.Flex`, 1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. A1.Flex é o shape com mais capacidade de sobra em tenancy trial; se ainda assim der `Out of host capacity`, troque para `VM.Standard.E4.Flex` ou `VM.Standard.E5.Flex` e rode o Apply de novo. |
+| `instance_shape`, `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (`VM.Standard.A4.Flex`, 1 OCPU, 8 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. Tenancies trial variam bastante em qual shape já vem com quota alocada por padrão: se der `Out of host capacity` ou erro de limite, confira em **Governance & Administration > Limits, Quotas and Usage** (filtre por Compute) qual shape tem OCPUs disponíveis na sua conta e troque essa variável antes de rodar o Apply de novo. |
 | `app_port` | Porta onde o Assistente TDC Floripa fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo Cohere usado. O padrão é `cohere.command-r-08-2024`, mais barato; `cohere.command-r-plus-08-2024` responde melhor em perguntas mais complexas. |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
