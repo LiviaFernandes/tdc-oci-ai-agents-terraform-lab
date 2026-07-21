@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assistente TDC Floripa</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: Canvas;
+    color: CanvasText;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 0.2rem; }
+  p.subtitle { opacity: 0.7; margin-top: 0; margin-bottom: 1.5rem; }
+  #log {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    min-height: 200px;
+  }
+  .msg { padding: 0.6rem 0.9rem; border-radius: 0.6rem; max-width: 85%; white-space: pre-wrap; }
+  .msg.user { align-self: flex-end; background: #2563eb; color: white; }
+  .msg.bot { align-self: flex-start; background: rgba(127,127,127,0.15); }
+  .msg.error { align-self: flex-start; background: #dc2626; color: white; }
+  form { display: flex; gap: 0.5rem; }
+  input[type=text] {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(127,127,127,0.4);
+    font-size: 1rem;
+    background: Field;
+    color: FieldText;
+  }
+  button {
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: #2563eb;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+</style>
+</head>
+<body>
+  <h1>Assistente TDC Floripa</h1>
+  <p class="subtitle">RAG + Custom Tool sobre OCI Generative AI, rodando nesta VM.</p>
+  <div id="log"></div>
+  <form id="chat-form">
+    <input id="message" type="text" placeholder="Pergunte sobre o TDC Floripa 2026..." autocomplete="off" />
+    <button type="submit" id="send-btn">Enviar</button>
+  </form>
+
+  <script>
+    const log = document.getElementById('log');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('message');
+    const sendBtn = document.getElementById('send-btn');
+
+    function addMessage(text, cls) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + cls;
+      div.textContent = text;
+      log.appendChild(div);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      input.value = '';
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          addMessage('Erro: ' + (data.error || res.statusText), 'error');
+        } else {
+          addMessage(data.text || '(resposta vazia)', 'bot');
+        }
+      } catch (err) {
+        addMessage('Erro de rede: ' + err.message, 'error');
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

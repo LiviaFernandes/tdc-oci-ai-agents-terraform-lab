@@ -1,6 +1,6 @@
-# Rede minima para a Custom Tool: so a subnet privada + NAT Gateway.
-# Nao ha VM nem bastion neste lab, entao nao precisamos de subnet publica
-# nem de Internet Gateway - o unico trafego e egress HTTPS da Custom Tool.
+# Rede minima para a VM: subnet publica + Internet Gateway. A VM precisa
+# de IP publico para voce abrir o chat_url no navegador, e de egress para
+# chamar o OCI Generative AI e a API publica da programacao.
 
 resource "oci_core_vcn" "lab" {
   compartment_id = oci_identity_compartment.lab.id
@@ -9,41 +9,59 @@ resource "oci_core_vcn" "lab" {
   dns_label      = "tdcaiagents"
 }
 
-resource "oci_core_nat_gateway" "lab" {
+resource "oci_core_internet_gateway" "lab" {
   compartment_id = oci_identity_compartment.lab.id
   vcn_id         = oci_core_vcn.lab.id
-  display_name   = "tdc-ai-agents-nat"
+  display_name   = "tdc-ai-agents-igw"
 }
 
-resource "oci_core_route_table" "private" {
+resource "oci_core_route_table" "public" {
   compartment_id = oci_identity_compartment.lab.id
   vcn_id         = oci_core_vcn.lab.id
-  display_name   = "tdc-ai-agents-private-rt"
+  display_name   = "tdc-ai-agents-public-rt"
 
   route_rules {
     destination       = "0.0.0.0/0"
-    network_entity_id = oci_core_nat_gateway.lab.id
+    network_entity_id = oci_core_internet_gateway.lab.id
   }
 }
 
-resource "oci_core_security_list" "private" {
+resource "oci_core_security_list" "public" {
   compartment_id = oci_identity_compartment.lab.id
   vcn_id         = oci_core_vcn.lab.id
-  display_name   = "tdc-ai-agents-private-sl"
+  display_name   = "tdc-ai-agents-public-sl"
 
   egress_security_rules {
     destination = "0.0.0.0/0"
     protocol    = "all"
   }
+
+  ingress_security_rules {
+    source   = "0.0.0.0/0"
+    protocol = "6" # TCP
+    tcp_options {
+      min = var.app_port
+      max = var.app_port
+    }
+  }
+
+  ingress_security_rules {
+    source   = "0.0.0.0/0"
+    protocol = "6" # TCP
+    tcp_options {
+      min = 22
+      max = 22
+    }
+  }
 }
 
-resource "oci_core_subnet" "private" {
+resource "oci_core_subnet" "public" {
   compartment_id             = oci_identity_compartment.lab.id
   vcn_id                     = oci_core_vcn.lab.id
-  cidr_block                 = var.private_subnet_cidr
-  display_name               = "tdc-ai-agents-private-subnet"
-  dns_label                  = "private"
-  prohibit_public_ip_on_vnic = true
-  route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_security_list.private.id]
+  cidr_block                 = var.public_subnet_cidr
+  display_name               = "tdc-ai-agents-public-subnet"
+  dns_label                  = "public"
+  prohibit_public_ip_on_vnic = false
+  route_table_id             = oci_core_route_table.public.id
+  security_list_ids          = [oci_core_security_list.public.id]
 }

@@ -2,15 +2,14 @@
 
 Este projeto contém o material de apoio para subir, via Terraform, um agente de IA generativa na Oracle Cloud Infrastructure, usando:
 
-- OCI Generative AI Agents;
-- Object Storage;
-- Knowledge Base com RAG;
-- Custom Tool via API pública já preparada;
-- endpoint do agente;
+- OCI Generative AI (inferencia direta, modelos Cohere Command);
+- uma VM que roda o agente, no estilo IaaS;
+- RAG por injeção de contexto direto na chamada de chat, com a base do TDC Floripa 2026;
+- Custom Tool via function-calling nativo do modelo, chamando a API pública já preparada;
 - programação real do TDC Floripa 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
-O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. A diferença para uma configuração manual é que aqui você não cria recurso por recurso no Console: sobe uma Stack no Resource Manager, que já vem com tenancy, usuário e região preenchidos automaticamente pela sua sessão, e o Terraform cuida de criar compartment, grupo, policy, rede, bucket, Knowledge Base, agent, tools e endpoint, nessa ordem.
+O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Diferente de usar um serviço gerenciado de agentes, aqui a infraestrutura é simples e rápida: uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
 
 ## Demo do lab
 
@@ -28,42 +27,33 @@ Quais trilhas existem no dia 22 de julho?
 Quais palestras a Livia Rodrigues vai fazer?
 ```
 
-Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, porque a resposta está no PDF que vira a base de conhecimento do agente. Perguntas sobre busca estruturada de sessões, speakers, trilhas por dia e filtros usam a **Custom Tool**, porque dependem de uma consulta em tempo real na API de programação.
+Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, porque a resposta está nos documentos de contexto que o app carrega junto com cada pergunta. Perguntas sobre busca estruturada de sessões, speakers, trilhas por dia e filtros usam a **Custom Tool**, porque dependem de uma consulta em tempo real na API de programação.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    Chat["Chat no Console OCI"]
+    Chat["Interface Web"]
 
     subgraph OCI["OCI - sua tenancy"]
-        subgraph Agent["Generative AI Agent"]
-            Endpoint["Agent Endpoint"]
-            RAGTool["RAG Tool"]
-            CustomTool["Custom Tool"]
+        subgraph VM["VM instance"]
+            App["Assistente TDC Floripa"]
         end
-        KB["Knowledge Base"]
-        Bucket["Object Storage / PDF"]
-        Subnet["Subnet privada"]
-        NAT["NAT Gateway"]
+        Model["OCI Generative AI - Cohere Command"]
+
+        VM --> Model
     end
 
     API["API pública da programação"]
 
-    Chat --> Endpoint
-    Endpoint --> RAGTool
-    Endpoint --> CustomTool
-    RAGTool --> KB
-    KB --> Bucket
-    CustomTool --> Subnet
-    Subnet --> NAT
-    NAT -.HTTPS.-> API
+    Chat --> VM
+    VM -.HTTPS.-> API
 
     style OCI fill:#f3f4f6,stroke:#111111,stroke-width:2px,stroke-dasharray: 5 5,color:#000000
-    style Agent fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
+    style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
 ```
 
-> A arquitetura mostra o fluxo de execução da demo. Compartment, grupo e policy aparecem no passo a passo como pré-requisitos de segurança, mas não entram no diagrama de runtime porque não fazem parte do caminho que uma pergunta percorre. A subnet privada com NAT Gateway existe para a Custom Tool conseguir fazer egress HTTPS para a API pública da programação; não há subnet pública nem Internet Gateway porque nenhum outro recurso deste lab precisa de IP público.
+O app roda inteiro dentro da VM: serve a interface de chat, monta a chamada para o OCI Generative AI incluindo os documentos de RAG e a definição da Custom Tool, e quando o modelo decide chamar a tool, o próprio app executa a chamada HTTP para a API de programação e devolve o resultado ao modelo. Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
 A Custom Tool usa a API pública já publicada:
 
@@ -77,8 +67,7 @@ Se você quiser apontar para a sua própria cópia da API, troque a variável `c
 
 - Conta OCI Trial ativa, com home region São Paulo (`sa-saopaulo-1`). Veja o passo 1 se você ainda não tem uma.
 - Acesso ao OCI Console.
-- Permissão para criar compartment, policies, rede, bucket, knowledge base, agent e endpoint. O dono de uma tenancy trial já tem esse acesso por padrão, como administrator.
-- Acesso à internet para o agente consultar a API pública da programação.
+- Permissão para criar compartment, dynamic group, policy, rede e instância. O dono de uma tenancy trial já tem esse acesso por padrão, como administrator.
 - O arquivo zip deste repositório, para subir como Stack no Resource Manager.
 
 ## 1. Criar a conta trial OCI
@@ -104,7 +93,7 @@ https://github.com/LiviaFernandes/tdc-oci-ai-agents-terraform-lab/raw/main/tdc-a
 
 Abra o link no navegador e o download de `tdc-ai-agents-trial.zip` começa sozinho — não precisa clonar nada.
 
-Se você alterou algum arquivo `.tf` e quer gerar o zip você mesma, clone o repositório e empacote a pasta `terraform`:
+Se você alterou algum arquivo `.tf` ou do app e quer gerar o zip você mesma, clone o repositório e empacote a pasta `terraform`:
 
 ```bash
 git clone https://github.com/LiviaFernandes/tdc-oci-ai-agents-terraform-lab.git
@@ -112,7 +101,7 @@ cd tdc-oci-ai-agents-terraform-lab/terraform
 zip -r ../tdc-ai-agents-trial.zip .
 ```
 
-De qualquer uma das duas formas, o zip fica com os arquivos `.tf` e a pasta `assets/` (o PDF da base RAG e o contrato OpenAPI da Custom Tool) na raiz do pacote, do jeito que o Resource Manager espera.
+De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init.yaml.tftpl` e a pasta `app/` (o código do Assistente TDC Floripa) na raiz do pacote, do jeito que o Resource Manager espera.
 
 ## 3. Criar a Stack
 
@@ -129,9 +118,9 @@ De qualquer uma das duas formas, o zip fica com os arquivos `.tf` e a pasta `ass
 
 ## 4. Preencher as variáveis
 
-O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As três variáveis obrigatórias — `tenancy_ocid`, `current_user_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy, o usuário e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
+O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As duas variáveis obrigatórias — `tenancy_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
 
-As demais variáveis (nome do compartment, nome do grupo, mensagens do agente, descrição das tools, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab, mas pode ajustar se quiser personalizar algum texto do agente.
+As demais variáveis (shape e tamanho da VM, porta do app, modelo Cohere, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
 
 Clique em **Next**, revise o resumo e siga em frente.
 
@@ -143,26 +132,25 @@ O apply cria, nesta ordem:
 
 ```text
 compartment tdc-ai-agents-lab
-grupo tdc-ai-agents-users, com voce como membro
-policy no root da tenancy
-VCN com subnet privada e NAT Gateway
-bucket com o PDF da base RAG
-Knowledge Base + data source + job de ingestao
-o agent
-RAG tool
-Custom Tool
-Agent Endpoint
+dynamic group tdc-ai-agents-vm
+policy no root da tenancy, autorizando a VM a chamar o OCI Generative AI
+VCN com subnet publica e Internet Gateway
+a VM, com o Assistente TDC Floripa instalado via cloud-init
 ```
 
-Costuma levar entre 5 e 10 minutos, a maior parte do tempo é a criação da Knowledge Base e do endpoint. Quando o status da Stack virar **Succeeded**, o lab está pronto.
+Sem Knowledge Base nem Agent Endpoint gerenciado pra esperar: costuma levar uns 5 minutos, a maior parte do tempo é o boot da VM e a instalação do Node.js e das dependências do app. Quando o status da Stack virar **Succeeded**, o lab está pronto.
 
-## 6. Conferir os outputs
+## 6. Abrir o chat
 
-Na Stack, vá na aba **Outputs**. Lá estão os IDs de cada recurso criado e uma dica de onde clicar no Console para abrir o chat do agente.
+Na Stack, vá na aba **Outputs** e procure `chat_url`.
+
+```text
+http://IP_PUBLICO:8080
+```
+
+Abra no navegador e comece a conversar.
 
 ## 7. Testar no chat
-
-Abra o OCI Console em **Analytics & AI > Generative AI Agents > Agent endpoints**, clique no endpoint criado e depois em **Launch chat**.
 
 ### Teste 1: RAG com informação geral do evento
 
@@ -170,7 +158,7 @@ Abra o OCI Console em **Analytics & AI > Generative AI Agents > Agent endpoints*
 O que são as Jornadas TDC e como elas ajudam uma pessoa a escolher melhor a experiência dela no TDC Floripa 2026?
 ```
 
-Resultado esperado: resposta conceitual sobre Jornadas TDC e formato do evento. O trace deve mostrar uso da RAG Tool `consulta_base_tdc`.
+Resultado esperado: resposta conceitual sobre Jornadas TDC e formato do evento, vinda dos documentos de contexto.
 
 ### Teste 2: Custom Tool com speaker específica
 
@@ -178,7 +166,7 @@ Resultado esperado: resposta conceitual sobre Jornadas TDC e formato do evento. 
 Quais palestras a Livia Rodrigues vai fazer?
 ```
 
-Resultado esperado: resposta com as sessões da Livia Rodrigues Fernandes Silva. O trace deve mostrar chamada a `consulta_programacao_tdc`.
+Resultado esperado: resposta com as sessões da Livia Rodrigues Fernandes Silva, vinda de uma chamada da Custom Tool.
 
 ### Teste 3: RAG + Custom Tool na mesma resposta
 
@@ -186,7 +174,7 @@ Resultado esperado: resposta com as sessões da Livia Rodrigues Fernandes Silva.
 Estou interessado em GenAI e agentes. Explique rapidamente como o TDC organiza trilhas ou jornadas e depois liste sessões da programação que falem sobre agentes.
 ```
 
-Resultado esperado: a primeira parte da resposta vem da RAG, explicando organização, jornadas ou trilhas; a segunda parte vem da Custom Tool, listando sessões filtradas por `agentes` ou termos relacionados.
+Resultado esperado: a primeira parte da resposta vem do RAG, explicando organização, jornadas ou trilhas; a segunda parte vem da Custom Tool, listando sessões filtradas por `agentes` ou termos relacionados.
 
 ### Teste 4: roteiro personalizado
 
@@ -203,34 +191,45 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | Variável | Descrição |
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
-| `current_user_ocid` | OCID do usuário que entra no grupo do lab. Auto-preenchida pelo Resource Manager com o usuário que está rodando a Stack. |
-| `region` | Região OCI com Generative AI Agents disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
+| `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
+| `instance_shape`, `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (`VM.Standard.E4.Flex`, 1 OCPU, 8 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
+| `app_port` | Porta onde o Assistente TDC Floripa fica escutando, e usada no `chat_url`. |
+| `model_id` | Modelo Cohere usado. O padrão é `cohere.command-r-08-2024`, mais barato; `cohere.command-r-plus-08-2024` responde melhor em perguntas mais complexas. |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
+| `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
 
-O auto-preenchimento só acontece porque os nomes `tenancy_ocid`, `current_user_ocid` e `region` são reservados pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os três à mão no `terraform.tfvars`.
+O auto-preenchimento só acontece porque os nomes `tenancy_ocid` e `region` são reservados pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os dois à mão no `terraform.tfvars`.
 
 ## Custo, sem complicar
 
 | Parte | Como pensar |
 | --- | --- |
-| Rede | VCN, subnet privada, NAT Gateway e security list não cobram por existir; tráfego de saída pode seguir as regras de cobrança da OCI. |
-| Object Storage | O PDF da base RAG é pequeno; fica dentro do free tier na maioria das tenancies. |
-| Generative AI Agents | Knowledge Base, agent e tools cobram por uso: consultas, ingestão e tokens do LLM por trás do RAG e das respostas. Usou pouco no lab, paga pouco. |
+| Rede | VCN, subnet pública, Internet Gateway e security list não cobram por existir; tráfego de saída pode seguir as regras de cobrança da OCI. |
+| VM | Paga por hora enquanto estiver ligada. Se desligar, para de consumir computação; o boot volume pode continuar existindo. |
+| OCI Generative AI | Paga por uso, normalmente por tokens de entrada e saída. Usou pouco no lab, paga pouco. |
 
 Para não deixar recursos ligados sem necessidade, destrua o lab quando terminar. Na tela da Stack, clique em **Destroy** e depois em **Apply** para confirmar.
+
+## Depurando a VM
+
+Se o app não responder, entre por SSH (precisa ter preenchido `ssh_public_key` antes do apply) e confira os logs:
+
+```bash
+ssh opc@IP_PUBLICO
+sudo journalctl -u tdc-agent -f
+```
 
 ## Rodando localmente, sem Resource Manager
 
 Se preferir não usar o Console, dá para rodar a mesma pasta com o Terraform local. Aqui não existe auto-preenchimento, então você mesma busca os valores:
 
 - `tenancy_ocid`: no OCI Console, clique no seu perfil (canto superior direito) e depois em **Tenancy**.
-- `current_user_ocid`: no OCI Console, clique no seu perfil e depois em **User settings**.
 
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
-# preencha tenancy_ocid, current_user_ocid e region no terraform.tfvars
+# preencha tenancy_ocid e region no terraform.tfvars
 terraform init
 terraform plan
 terraform apply

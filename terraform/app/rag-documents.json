@@ -1,0 +1,30 @@
+[
+  {
+    "title": "Visao geral do evento",
+    "snippet": "O TDC Floripa 2026 e uma edicao de The Developer's Conference voltada a tecnologia, inovacao, IA aplicada, arquitetura, engenharia, produto, dados, seguranca, lideranca tecnica e transformacao digital. O evento acontece no CentroSul, em Florianopolis, de 22 a 24 de julho de 2026. O formato do evento e hibrido: presencial e online, dependendo da modalidade de ingresso adquirida."
+  },
+  {
+    "title": "Links oficiais importantes",
+    "snippet": "Pagina oficial do evento: https://thedevconf.com/tdc/2026/florianopolis/. Pagina oficial de Jornadas: https://thedevconf.com/tdc/2026/florianopolis/jornadas/. Inscricoes: https://thedevconf.com/tdc/2026/florianopolis/inscricoes. Pagina externa de inscricao: https://inscricoes.thedevconf.com/novainscricao/tdc-2026-florianopolis."
+  },
+  {
+    "title": "Jornadas TDC",
+    "snippet": "As Jornadas TDC combinam tres trilhas nos dias 22, 23 e 24 de julho, escolhidas pelo comite tecnico para se complementarem em um tema. A proposta das Jornadas e oferecer uma experiencia mais coerente para quem ja sabe em qual area deseja se aprofundar. A pagina oficial informa que existem 13 jornadas organizadas em 5 areas. O pacote Jornada e diferente da compra avulsa de trilhas porque organiza uma sequencia de tres dias em torno de uma narrativa tecnica."
+  },
+  {
+    "title": "Forum Executivo",
+    "snippet": "O Forum Executivo e descrito como um espaco reservado para quem decide os rumos da tecnologia. O foco do Forum Executivo nao e ferramenta; e impacto, risco, governanca, investimento e direcionamento. E indicado para liderancas que respondem por decisoes criticas e precisam orientar times e investimentos."
+  },
+  {
+    "title": "Experiencias do TDC Floripa",
+    "snippet": "O evento inclui palestras e paineis com especialistas sobre IA aplicada, decisoes tecnicas, trade-offs e caminhos viaveis para o mundo real. Tambem inclui workshops praticos, mentorias, Community Lounge, networking e acesso a palestras gravadas conforme modalidade de ingresso. Empresas podem usar o evento para capacitacao pratica, alinhamento tecnico entre squads, desenvolvimento de lideranca tecnica e reconhecimento de talentos."
+  },
+  {
+    "title": "FAQ resumido",
+    "snippet": "A experiencia comeca no momento da inscricao. Nao e necessario esperar a programacao completa para se inscrever, ela e divulgada ao longo do tempo. O TDC e hibrido: a participacao presencial ou online depende do tipo de ingresso. As palestras ficam disponiveis apos o evento conforme a modalidade de ingresso. Workshops e mentorias sao escolhidos conforme abertura oficial das agendas e disponibilidade de vagas. Empresas podem comprar ingressos em grupo e combinar participacao digital e presencial."
+  },
+  {
+    "title": "RAG versus Custom Tool no lab",
+    "snippet": "RAG serve para conhecimento documental e relativamente estavel: contexto do evento, regras gerais, conceitos, FAQ, jornadas e orientacoes. A Custom Tool serve para dados estruturados, filtraveis ou que podem mudar: sessoes, horarios, speakers, trilhas por dia e busca por palavras-chave. Perguntas gerais como 'o que sao as Jornadas TDC?' usam RAG; perguntas estruturadas como 'quais sessoes falam sobre agentes?' usam a Custom Tool, porque dependem do dataset estruturado da programacao."
+  }
+]

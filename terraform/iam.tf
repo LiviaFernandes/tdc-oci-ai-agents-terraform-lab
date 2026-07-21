@@ -4,29 +4,25 @@ resource "oci_identity_compartment" "lab" {
   description    = var.compartment_description
 }
 
-resource "oci_identity_group" "lab_users" {
+# Dynamic group: qualquer instancia criada dentro do compartment do lab
+# entra automaticamente. E essa identidade que a VM usa (instance
+# principal) para chamar o OCI Generative AI, sem precisar de API key.
+resource "oci_identity_dynamic_group" "vm" {
   compartment_id = var.tenancy_ocid
-  name           = var.group_name
-  description    = "Grupo do laboratorio TDC AI Agents OCI"
+  name           = var.dynamic_group_name
+  description    = "VMs do laboratorio TDC AI Agents que podem chamar o OCI Generative AI"
+  matching_rule  = "ALL {instance.compartment.id = '${oci_identity_compartment.lab.id}'}"
 }
 
-resource "oci_identity_user_group_membership" "lab_user" {
-  group_id = oci_identity_group.lab_users.id
-  user_id  = var.current_user_ocid
-}
-
-# A policy do lab precisa viver no compartment root da tenancy, nao dentro
-# do compartment do lab. As statements usam o nome do compartment, nao o OCID.
+# A policy do lab precisa viver no compartment root da tenancy. O verbo
+# e "manage", nao "use" - e o que o servico Generative AI Inference exige
+# pra chamadas de chat via instance principal.
 resource "oci_identity_policy" "lab_policy" {
   compartment_id = var.tenancy_ocid
   name           = var.policy_name
   description    = "Policy do laboratorio TDC AI Agents OCI"
 
   statements = [
-    "Allow group ${oci_identity_group.lab_users.name} to manage object-family in compartment ${oci_identity_compartment.lab.name}",
-    "Allow group ${oci_identity_group.lab_users.name} to manage virtual-network-family in compartment ${oci_identity_compartment.lab.name}",
-    "Allow group ${oci_identity_group.lab_users.name} to manage generative-ai-family in compartment ${oci_identity_compartment.lab.name}",
-    "Allow group ${oci_identity_group.lab_users.name} to manage genai-agent-family in compartment ${oci_identity_compartment.lab.name}",
-    "Allow group ${oci_identity_group.lab_users.name} to inspect compartments in tenancy",
+    "Allow dynamic-group ${oci_identity_dynamic_group.vm.name} to manage generative-ai-family in compartment ${oci_identity_compartment.lab.name}",
   ]
 }

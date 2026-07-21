@@ -1,0 +1,60 @@
+#cloud-config
+write_files:
+  - path: /opt/tdc-agent/server.js
+    encoding: b64
+    content: ${server_js_b64}
+    owner: root:root
+    permissions: '0644'
+  - path: /opt/tdc-agent/package.json
+    encoding: b64
+    content: ${package_json_b64}
+    owner: root:root
+    permissions: '0644'
+  - path: /opt/tdc-agent/rag-documents.json
+    encoding: b64
+    content: ${rag_documents_b64}
+    owner: root:root
+    permissions: '0644'
+  - path: /opt/tdc-agent/system-prompt.txt
+    encoding: b64
+    content: ${system_prompt_b64}
+    owner: root:root
+    permissions: '0644'
+  - path: /opt/tdc-agent/public/index.html
+    encoding: b64
+    content: ${index_html_b64}
+    owner: root:root
+    permissions: '0644'
+  - path: /etc/systemd/system/tdc-agent.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Assistente TDC Floripa
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      WorkingDirectory=/opt/tdc-agent
+      Environment="PORT=${app_port}"
+      Environment="OCI_COMPARTMENT_ID=${compartment_id}"
+      Environment="MODEL_ID=${model_id}"
+      Environment="TOOL_API_URL=${custom_tool_api_url}"
+      ExecStart=/usr/bin/node /opt/tdc-agent/server.js
+      Restart=on-failure
+      RestartSec=5
+      User=root
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - mkdir -p /opt/tdc-agent/public
+  - dnf module enable -y nodejs:20
+  - dnf install -y nodejs
+  - cd /opt/tdc-agent && npm install --omit=dev
+  - firewall-cmd --permanent --add-port=${app_port}/tcp
+  - firewall-cmd --reload
+  - systemctl daemon-reload
+  - systemctl enable --now tdc-agent

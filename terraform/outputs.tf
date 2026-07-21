@@ -2,30 +2,18 @@ output "compartment_id" {
   value = oci_identity_compartment.lab.id
 }
 
-output "group_id" {
-  value = oci_identity_group.lab_users.id
+output "instance_id" {
+  value = oci_core_instance.vm.id
 }
 
-output "bucket_name" {
-  value = oci_objectstorage_bucket.kb.name
+output "public_ip" {
+  value = oci_core_instance.vm.public_ip
 }
 
-output "private_subnet_id" {
-  value = oci_core_subnet.private.id
+output "chat_url" {
+  value = "http://${oci_core_instance.vm.public_ip}:${var.app_port}"
 }
 
-output "knowledge_base_id" {
-  value = oci_generative_ai_agent_knowledge_base.tdc.id
-}
-
-output "agent_id" {
-  value = oci_generative_ai_agent_agent.tdc.id
-}
-
-output "agent_endpoint_id" {
-  value = oci_generative_ai_agent_agent_endpoint.tdc.id
-}
-
-output "next_step" {
-  value = "Abra o OCI Console > Analytics & AI > Generative AI Agents > Agent endpoints, encontre '${oci_generative_ai_agent_agent_endpoint.tdc.display_name}' e clique em Launch chat para testar o agente."
+output "ssh_command" {
+  value = var.ssh_public_key != "" ? "ssh opc@${oci_core_instance.vm.public_ip}" : "Nenhuma chave SSH configurada (ssh_public_key vazio)."
 }

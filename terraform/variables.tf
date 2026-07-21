@@ -3,13 +3,8 @@ variable "tenancy_ocid" {
   type        = string
 }
 
-variable "current_user_ocid" {
-  description = "OCID do usuario que vai entrar no grupo do lab. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'current_user_ocid' - e o usuario que esta rodando a Stack. Rodando localmente, pegue em My profile > User information."
-  type        = string
-}
-
 variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI Agents disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao escolhida na criacao da conta trial (ex: sa-saopaulo-1)."
+  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao escolhida na criacao da conta trial (ex: sa-saopaulo-1)."
   type        = string
   default     = "sa-saopaulo-1"
 }
@@ -25,10 +20,10 @@ variable "compartment_description" {
   default = "Recursos do laboratorio TDC AI Agents OCI (Terraform)"
 }
 
-variable "group_name" {
-  description = "Nome do grupo criado para o lab. A policy do lab e concedida a este grupo."
+variable "dynamic_group_name" {
+  description = "Nome do dynamic group que agrupa a VM do lab. A policy do lab e concedida a este dynamic group."
   type        = string
-  default     = "tdc-ai-agents-users"
+  default     = "tdc-ai-agents-vm"
 }
 
 variable "policy_name" {
@@ -41,50 +36,55 @@ variable "vcn_cidr" {
   default = "10.0.0.0/16"
 }
 
-variable "private_subnet_cidr" {
-  description = "CIDR da subnet privada usada pela Custom Tool para sair para a internet via NAT Gateway."
+variable "public_subnet_cidr" {
+  description = "CIDR da subnet publica onde a VM do agente roda."
   type        = string
-  default     = "10.0.1.0/24"
+  default     = "10.0.0.0/24"
 }
 
-variable "bucket_name" {
-  description = "Bucket do Object Storage que guarda o PDF usado pela Knowledge Base (RAG)."
+variable "instance_shape" {
+  description = "Shape da VM. Uma flexible shape ampla e barata ja e suficiente, o trabalho pesado (o modelo) roda no OCI Generative AI, nao na VM."
   type        = string
-  default     = "tdc-agent-kb"
+  default     = "VM.Standard.E4.Flex"
 }
 
-variable "agent_display_name" {
-  type    = string
-  default = "Assistente TDC Floripa"
+variable "instance_ocpus" {
+  type    = number
+  default = 1
 }
 
-variable "agent_welcome_message" {
-  type    = string
-  default = "Ola! Sou o Assistente TDC Floripa. Posso responder perguntas sobre o TDC Floripa 2026, trilhas, jornadas, speakers e programacao."
+variable "instance_memory_in_gbs" {
+  type    = number
+  default = 8
+}
+
+variable "app_port" {
+  description = "Porta onde o Assistente TDC Floripa fica escutando. E a mesma porta liberada na security list e usada no chat_url."
+  type        = number
+  default     = 8080
+}
+
+variable "ssh_public_key" {
+  description = "Sua chave publica SSH, para acessar a VM e ver logs (journalctl -u tdc-agent). Pode deixar vazio se nao precisar de SSH."
+  type        = string
+  default     = ""
+}
+
+variable "model_id" {
+  description = "Modelo Cohere usado no OCI Generative AI. cohere.command-r-08-2024 e mais barato; cohere.command-r-plus-08-2024 responde melhor em perguntas mais complexas."
+  type        = string
+  default     = "cohere.command-r-08-2024"
 }
 
 variable "agent_instruction" {
-  description = "Instrucoes do agente. Substitui o system prompt padrao."
+  description = "Instrucoes do agente (system prompt). Substitui o texto padrao."
   type        = string
   default     = <<-EOT
     Voce e o Assistente TDC Floripa, um agente para orientar participantes sobre o TDC Floripa 2026.
     Responda em portugues brasileiro, de forma clara, objetiva e educada.
-    Use a base de conhecimento para perguntas gerais sobre o evento, jornadas, formato, FAQ, regras e links oficiais.
+    Use os documentos de contexto para perguntas gerais sobre o evento, jornadas, formato, FAQ, regras e links oficiais.
     Use obrigatoriamente a tool consulta_programacao_tdc quando a pergunta pedir agenda, programacao, trilhas por dia, horarios, palestras, sessoes, speakers, nomes de pessoas ou busca por termo.
-    Nao invente horarios, speakers, valores ou regras que nao estejam na base ou na resposta da tool.
-  EOT
-}
-
-variable "rag_tool_description" {
-  type    = string
-  default = "Use esta ferramenta somente para perguntas gerais sobre o TDC Floripa 2026, incluindo formato do evento, jornadas, FAQ, inscricoes, modalidades, links oficiais e orientacoes gerais. Nao use esta ferramenta para perguntas sobre agenda, programacao, sessoes, palestras, horarios, trilhas especificas, speakers ou nomes de pessoas; nesses casos use obrigatoriamente a Custom Tool consulta_programacao_tdc."
-}
-
-variable "custom_tool_description" {
-  type    = string
-  default = <<-EOT
-    Use esta ferramenta obrigatoriamente para buscar sessoes, speakers, trilhas por dia, horarios, palestras, nomes de pessoas e detalhes estruturados da programacao do TDC Floripa 2026.
-    Ela deve ser usada sempre que o usuario perguntar sobre agenda, horarios, palestras, trilhas especificas, speakers, nomes de pessoas ou busca por termo na programacao.
+    Nao invente horarios, speakers, valores ou regras que nao estejam no contexto ou na resposta da tool.
   EOT
 }
 

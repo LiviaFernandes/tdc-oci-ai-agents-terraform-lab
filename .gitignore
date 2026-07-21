@@ -22,3 +22,6 @@ terraform.tfvars
 
 # OS
 .DS_Store
+
+# App Node
+node_modules/
