@@ -67,9 +67,9 @@ variable "ssh_public_key" {
 }
 
 variable "model_id" {
-  description = "Modelo Cohere usado no OCI Generative AI. cohere.command-r-08-2024 e mais barato; cohere.command-r-plus-08-2024 responde melhor em perguntas mais complexas."
+  description = "Modelo usado no OCI Generative AI. O catalogo de modelos disponivel varia por regiao - confira em Analytics & AI > Generative AI > Playground quais aparecem para a sua. O app suporta tanto modelos Cohere (cohere.*) quanto os demais (meta.*, xai.*, google.*, openai.*), detectando o formato pelo prefixo do nome."
   type        = string
-  default     = "cohere.command-r-08-2024"
+  default     = "meta.llama-3.3-70b-instruct"
 }
 
 variable "agent_instruction" {

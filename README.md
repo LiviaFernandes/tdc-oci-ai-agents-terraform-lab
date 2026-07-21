@@ -2,7 +2,7 @@
 
 Este projeto contém o material de apoio para subir, via Terraform, um agente de IA generativa na Oracle Cloud Infrastructure, usando:
 
-- OCI Generative AI (inferencia direta, modelos Cohere Command);
+- OCI Generative AI (inferencia direta, com modelos como Meta Llama, Cohere Command, xAI Grok ou Google Gemini, dependendo da regiao);
 - uma VM que roda o agente, no estilo IaaS;
 - RAG por injeção de contexto direto na chamada de chat, com a base do TDC Floripa 2026;
 - Custom Tool via function-calling nativo do modelo, chamando a API pública já preparada;
@@ -39,7 +39,7 @@ flowchart LR
         subgraph VM["VM instance"]
             App["Assistente TDC Floripa"]
         end
-        Model["OCI Generative AI - Cohere Command"]
+        Model["OCI Generative AI"]
 
         VM --> Model
     end
@@ -120,7 +120,7 @@ De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init
 
 O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As duas variáveis obrigatórias — `tenancy_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
 
-As demais variáveis (tamanho da VM, porta do app, modelo Cohere, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
+As demais variáveis (tamanho da VM, porta do app, modelo do OCI Generative AI, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
 
 Não existe variável de shape: o Terraform consulta um Compute Capacity Report em cada Availability Domain da região e escolhe sozinho o primeiro shape com capacidade confirmada, testando nesta ordem: `VM.Standard.A4.Flex`, `VM.Standard.A1.Flex`, `VM.Standard.E4.Flex`, `VM.Standard.E5.Flex`. Isso evita o erro `Out of host capacity`, comum em tenancies trial onde a quota disponível varia de conta pra conta.
 
@@ -196,7 +196,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC Floripa fica escutando, e usada no `chat_url`. |
-| `model_id` | Modelo Cohere usado. O padrão é `cohere.command-r-08-2024`, mais barato; `cohere.command-r-plus-08-2024` responde melhor em perguntas mais complexas. |
+| `model_id` | Modelo usado no OCI Generative AI. O padrão é `meta.llama-3.3-70b-instruct`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
