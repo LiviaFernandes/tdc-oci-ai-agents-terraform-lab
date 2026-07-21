@@ -129,7 +129,10 @@ resource "oci_core_instance" "vm" {
 
   metadata = merge(
     {
-      user_data = base64encode(templatefile("${path.module}/cloud-init.yaml.tftpl", {
+      # base64gzip em vez de base64encode: o metadata da instancia na OCI
+      # tem limite de 32000 bytes, e o cloud-init com todos os arquivos do
+      # app embutidos passa disso sem compressao.
+      user_data = base64gzip(templatefile("${path.module}/cloud-init.yaml.tftpl", {
         app_port            = var.app_port
         compartment_id      = oci_identity_compartment.lab.id
         model_id            = var.model_id
