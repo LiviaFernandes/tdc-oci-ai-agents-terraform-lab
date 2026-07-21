@@ -96,7 +96,15 @@ Com a conta criada e o primeiro login feito, siga para o restante do lab.
 
 ## 2. Preparar o pacote da Stack
 
-O Resource Manager sobe a partir de um `.zip` com os arquivos Terraform na raiz. Clone o repositório e gere o zip a partir da pasta `terraform`:
+O Resource Manager sobe a partir de um `.zip` com os arquivos Terraform na raiz. O jeito mais rápido é baixar o zip já pronto direto deste repositório:
+
+```text
+https://github.com/LiviaFernandes/tdc-oci-ai-agents-terraform-lab/raw/main/tdc-ai-agents-trial.zip
+```
+
+Abra o link no navegador e o download de `tdc-ai-agents-trial.zip` começa sozinho — não precisa clonar nada.
+
+Se você alterou algum arquivo `.tf` e quer gerar o zip você mesma, clone o repositório e empacote a pasta `terraform`:
 
 ```bash
 git clone https://github.com/LiviaFernandes/tdc-oci-ai-agents-terraform-lab.git
@@ -104,7 +112,7 @@ cd tdc-oci-ai-agents-terraform-lab/terraform
 zip -r ../tdc-ai-agents-trial.zip .
 ```
 
-Isso gera `tdc-ai-agents-trial.zip` na raiz do repositório, já com os arquivos `.tf` e a pasta `assets/` (o PDF da base RAG e o contrato OpenAPI da Custom Tool) no lugar certo.
+De qualquer uma das duas formas, o zip fica com os arquivos `.tf` e a pasta `assets/` (o PDF da base RAG e o contrato OpenAPI da Custom Tool) na raiz do pacote, do jeito que o Resource Manager espera.
 
 ## 3. Criar a Stack
 
