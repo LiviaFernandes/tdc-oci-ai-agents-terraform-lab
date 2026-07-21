@@ -17,8 +17,14 @@ data "oci_identity_availability_domains" "ads" {
 }
 
 data "oci_core_shapes" "by_ad" {
-  count               = length(data.oci_identity_availability_domains.ads.availability_domains)
-  compartment_id      = oci_identity_compartment.lab.id
+  count = length(data.oci_identity_availability_domains.ads.availability_domains)
+  # Usa tenancy_ocid, nao o compartment do lab: esse compartment ainda vai
+  # ser criado neste mesmo apply, entao seu OCID so existe apos a criacao.
+  # Um count baseado nisso quebraria com "Invalid count argument", porque
+  # o Terraform precisa saber o tamanho da lista antes do apply comecar.
+  # A lista de shapes disponiveis nao muda entre compartments, so entre
+  # regiao/AD, entao usar a tenancy aqui e equivalente e sempre conhecido.
+  compartment_id      = var.tenancy_ocid
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[count.index].name
 }
 
