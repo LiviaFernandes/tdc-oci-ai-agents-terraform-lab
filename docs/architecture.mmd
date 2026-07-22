@@ -1,0 +1,22 @@
+flowchart LR
+    Web["Navegador"]
+    TG["Telegram (opcional)"]
+
+    subgraph OCI["OCI - sua tenancy"]
+        subgraph VM["VM instance"]
+            Server["server.js
+RAG + tool-calling"]
+        end
+        GenAI["OCI Generative AI"]
+    end
+
+    API["API pública da
+programação TDC"]
+
+    Web --> Server
+    TG -.-> Server
+    Server <--> GenAI
+    Server <--> API
+
+    style OCI fill:#f3f4f6,stroke:#111111,stroke-width:2px,stroke-dasharray: 5 5,color:#000000
+    style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
