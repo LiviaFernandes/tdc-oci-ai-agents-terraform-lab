@@ -32,40 +32,29 @@ Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, 
 ## Arquitetura
 
 ```mermaid
-flowchart TD
-    Web["Navegador (interface web)"]
+flowchart LR
+    Web["Navegador"]
     TG["Telegram (opcional)"]
 
     subgraph OCI["OCI - sua tenancy"]
-        subgraph VM["VM instance - Node.js"]
-            Server["Servidor Express (server.js)"]
-            Prompt["System prompt + documentos RAG"]
-            ToolDef["Definição da tool consulta_programacao_tdc"]
-            Principal["Instance Principal (sem API key)"]
+        subgraph VM["VM instance"]
+            Server["server.js<br/>RAG + tool-calling"]
         end
-        GenAI["OCI Generative AI (Llama / Cohere / etc)"]
+        GenAI["OCI Generative AI"]
     end
 
     API["API pública da programação TDC"]
 
-    Web <--> Server
+    Web --> Server
     TG -.-> Server
-    Server --> Prompt
-    Server --> ToolDef
-    Principal -.autentica.-> GenAI
-
-    Server -->|1. pergunta + prompt + tool| GenAI
-    GenAI -->|2. resposta ou pedido de tool call| Server
-    Server -->|3. chama a tool| API
-    API -->|4. resultado| Server
-    Server -->|5. reenvia resultado| GenAI
-    GenAI -->|6. resposta final| Server
+    Server <--> GenAI
+    Server <--> API
 
     style OCI fill:#f3f4f6,stroke:#111111,stroke-width:2px,stroke-dasharray: 5 5,color:#000000
     style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
 ```
 
-Como o agente foi montado, por dentro:
+Como o agente foi montado, por dentro do `server.js`:
 
 - **Provisionamento**: o `cloud-init` instala Node.js 20 (via módulo do `dnf`), grava o código do app em `/opt/tdc-agent` e sobe um serviço systemd (`tdc-agent.service`) que reinicia sozinho se cair.
 - **O app** é um servidor Express único (`terraform/app/server.js`), sem framework de agente por trás — a "inteligência" de RAG e tool-calling é só a forma como ele monta cada chamada ao modelo.
