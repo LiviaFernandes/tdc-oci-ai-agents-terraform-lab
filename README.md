@@ -9,7 +9,7 @@ Este projeto contém o material de apoio para subir, via Terraform, um agente de
 - programação real do TDC Floripa 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
-O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Diferente de usar um serviço gerenciado de agentes, aqui a infraestrutura é simples e rápida: uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
+O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
 
 ## Demo do lab
 
@@ -33,7 +33,7 @@ Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, 
 
 ![Arquitetura do Assistente TDC Floripa](docs/architecture.png)
 
-Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
+A VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
 ### Como o agente foi construído
 
@@ -136,7 +136,7 @@ VCN com subnet publica e Internet Gateway
 a VM, com o Assistente TDC Floripa instalado via cloud-init
 ```
 
-Sem Knowledge Base nem Agent Endpoint gerenciado pra esperar: costuma levar uns 5 minutos, a maior parte do tempo é o boot da VM e a instalação do Node.js e das dependências do app. Quando o status da Stack virar **Succeeded**, o lab está pronto.
+Costuma levar uns 5 minutos, a maior parte do tempo é o boot da VM e a instalação do Node.js e das dependências do app. Quando o status da Stack virar **Succeeded**, o lab está pronto.
 
 ## 6. Abrir o chat
 
@@ -203,8 +203,6 @@ sudo systemctl restart tdc-agent
 ```
 
 Depois de qualquer um dos dois caminhos, procure seu bot no Telegram e mande uma mensagem — ele responde usando o mesmo motor de RAG e Custom Tool do chat web, com histórico próprio por conversa.
-
-> Diferente de um agente autônomo tipo OpenClaw ou Hermes, o Assistente TDC Floripa não tem acesso a shell nem consegue se configurar sozinho a pedido — o Telegram aqui é código já embutido no `server.js`, ligado ou desligado pelo token.
 
 ## Variáveis principais
 
