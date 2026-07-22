@@ -31,28 +31,9 @@ Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, 
 
 ## Arquitetura
 
-```mermaid
-flowchart LR
-    Web["Navegador"]
-    TG["Telegram (opcional)"]
+![Arquitetura do Assistente TDC Floripa](docs/architecture.png)
 
-    subgraph OCI["OCI - sua tenancy"]
-        subgraph VM["VM instance"]
-            Server["server.js<br/>RAG + tool-calling"]
-        end
-        GenAI["OCI Generative AI"]
-    end
-
-    API["API pública da programação TDC"]
-
-    Web --> Server
-    TG -.-> Server
-    Server <--> GenAI
-    Server <--> API
-
-    style OCI fill:#f3f4f6,stroke:#111111,stroke-width:2px,stroke-dasharray: 5 5,color:#000000
-    style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
-```
+> Fonte do diagrama em `docs/architecture.mmd` (Mermaid), caso queira editar.
 
 Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
