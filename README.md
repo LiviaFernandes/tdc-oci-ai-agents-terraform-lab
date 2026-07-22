@@ -58,18 +58,19 @@ Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a V
 
 ### Como o agente foi construído
 
-O `terraform/app/server.js` é um servidor Express único, sem nenhum framework de agente por trás. Provisionamento e código:
+O node `server.js` no diagrama acima é só isso: um servidor Express comum, sem nenhum framework de agente por trás. O fluxo de uma pergunta é simples:
 
-- **Provisionamento**: o `cloud-init` instala Node.js 20 (via módulo do `dnf`), grava o código do app em `/opt/tdc-agent` e sobe um serviço systemd (`tdc-agent.service`) que reinicia sozinho se cair.
-- **Autenticação**: o app usa o SDK oficial `oci-generativeaiinference`, autenticando com `InstancePrincipalsAuthenticationDetailsProviderBuilder` — a própria VM tem uma identidade (dynamic group + policy), sem precisar guardar API key em lugar nenhum.
+1. Você manda uma mensagem (pelo navegador ou pelo Telegram).
+2. O `server.js` monta uma chamada pro OCI Generative AI com três coisas: o system prompt, os documentos do evento (RAG) e a definição da tool `consulta_programacao_tdc`.
+3. Pergunta geral sobre o evento → o modelo já responde direto, usando os documentos.
+4. Pergunta sobre programação → o modelo pede pra chamar a tool em vez de responder. O `server.js` faz essa chamada na API pública, devolve o resultado pro modelo, e só então vem a resposta final.
 
-O resto da "inteligência" é só a forma como cada chamada ao modelo é montada:
+Alguns detalhes de implementação, pra quem quiser abrir o código:
 
-- **Dois formatos de chat**: o OCI Generative AI aceita formatos diferentes dependendo do modelo. Modelos Cohere (`cohere.*`) usam o formato nativo `COHERE`, com um campo `documents` pronto pra RAG e tools no estilo `parameterDefinitions`. Todo o resto (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato `GENERIC`, parecido com mensagens da OpenAI (`messages`, papéis `SYSTEM`/`USER`/`ASSISTANT`/`TOOL`), mas com os campos da tool soltos no objeto em vez de aninhados num `function` — uma diferença sutil que já causou um bug real durante os testes deste lab. O app decide qual caminho usar pelo prefixo do `model_id` e tem uma função pra cada um, `askAssistantCohere` e `askAssistantGeneric`.
-- **RAG por injeção de contexto, não Knowledge Base**: os documentos do evento (`rag-documents.json`, extraídos do PDF do lab original) entram como texto dentro da mensagem de sistema a cada pergunta (ou no campo nativo `documents`, no caso do Cohere). Funciona bem porque a base é pequena; uma base grande precisaria de busca de verdade antes de injetar.
-- **Tool-calling em loop**: quando a pergunta é sobre programação, o modelo devolve um pedido de "tool call" em vez de texto. O app chama a API pública com os parâmetros que o modelo pediu, devolve o resultado numa nova mensagem e pergunta de novo ao modelo — até sair uma resposta final, num máximo de 4 idas e voltas pra não travar em loop.
-- **Histórico do lado do cliente**: o servidor não guarda conversa nenhuma em memória própria. O navegador manda as últimas trocas a cada request dentro de `history`, e o servidor remonta a conversa inteira antes de perguntar de novo ao modelo. O Telegram é a exceção: guarda um histórico curto por `chat_id`, enquanto o processo estiver de pé (se a VM reiniciar, zera).
-- **Telegram opcional**: se `TELEGRAM_BOT_TOKEN` estiver definido, um loop de long polling (`getUpdates`) roda em paralelo ao servidor HTTP, chamando a mesma função `askAssistant` usada pelo chat web pra cada mensagem recebida.
+- **Dois formatos de chat**: modelos Cohere (`cohere.*`) usam o formato nativo `COHERE`; todo o resto (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato `GENERIC`, no estilo mensagens da OpenAI. O app detecta pelo prefixo do `model_id`, numa função pra cada formato (`askAssistantCohere` e `askAssistantGeneric`).
+- **RAG é texto injetado, não Knowledge Base** — funciona porque a base do evento é pequena; uma base grande precisaria de busca de verdade antes de injetar.
+- **Histórico vive no cliente**: o navegador manda as últimas trocas a cada request; o Telegram guarda por `chat_id` enquanto o processo estiver de pé.
+- **Autenticação** é por instance principal — a VM tem identidade própria (dynamic group + policy), sem API key guardada em lugar nenhum.
 
 A Custom Tool usa a API pública já publicada:
 
