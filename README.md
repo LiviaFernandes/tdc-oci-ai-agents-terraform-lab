@@ -32,28 +32,49 @@ Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, 
 ## Arquitetura
 
 ```mermaid
-flowchart LR
-    Chat["Interface Web"]
+flowchart TD
+    Web["Navegador (interface web)"]
+    TG["Telegram (opcional)"]
 
     subgraph OCI["OCI - sua tenancy"]
-        subgraph VM["VM instance"]
-            App["Assistente TDC Floripa"]
+        subgraph VM["VM instance - Node.js"]
+            Server["Servidor Express (server.js)"]
+            Prompt["System prompt + documentos RAG"]
+            ToolDef["Definição da tool consulta_programacao_tdc"]
+            Principal["Instance Principal (sem API key)"]
         end
-        Model["OCI Generative AI"]
-
-        VM --> Model
+        GenAI["OCI Generative AI (Llama / Cohere / etc)"]
     end
 
-    API["API pública da programação"]
+    API["API pública da programação TDC"]
 
-    Chat --> VM
-    VM -.HTTPS.-> API
+    Web <--> Server
+    TG -.-> Server
+    Server --> Prompt
+    Server --> ToolDef
+    Principal -.autentica.-> GenAI
+
+    Server -->|1. pergunta + prompt + tool| GenAI
+    GenAI -->|2. resposta ou pedido de tool call| Server
+    Server -->|3. chama a tool| API
+    API -->|4. resultado| Server
+    Server -->|5. reenvia resultado| GenAI
+    GenAI -->|6. resposta final| Server
 
     style OCI fill:#f3f4f6,stroke:#111111,stroke-width:2px,stroke-dasharray: 5 5,color:#000000
     style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
 ```
 
-O app roda inteiro dentro da VM: serve a interface de chat, monta a chamada para o OCI Generative AI incluindo os documentos de RAG e a definição da Custom Tool, e quando o modelo decide chamar a tool, o próprio app executa a chamada HTTP para a API de programação e devolve o resultado ao modelo. Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
+Como o agente foi montado, por dentro:
+
+- **Provisionamento**: o `cloud-init` instala Node.js 20 (via módulo do `dnf`), grava o código do app em `/opt/tdc-agent` e sobe um serviço systemd (`tdc-agent.service`) que reinicia sozinho se cair.
+- **O app** é um servidor Express único (`terraform/app/server.js`), sem framework de agente por trás — a "inteligência" de RAG e tool-calling é só a forma como ele monta cada chamada ao modelo.
+- **RAG** não é uma Knowledge Base gerenciada: os documentos (`rag-documents.json`, extraídos do PDF do lab original) entram como texto direto na mensagem de sistema (ou no campo nativo `documents`, se o modelo for Cohere) a cada pergunta.
+- **Custom Tool** é function-calling nativo do modelo: o app declara a tool `consulta_programacao_tdc` na chamada, e quando o modelo decide usá-la, o próprio `server.js` faz a chamada HTTP para a API pública da programação e devolve o resultado pro modelo terminar a resposta.
+- **Autenticação** é por instance principal — a VM tem sua própria identidade (dynamic group + policy), sem precisar guardar API key nenhuma.
+- **Histórico de conversa** vive no cliente (navegador ou Telegram), não no servidor: cada request manda as últimas trocas junto, e o servidor remonta o contexto a cada chamada.
+
+Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
 A Custom Tool usa a API pública já publicada:
 
@@ -186,6 +207,30 @@ Tenho acesso ao dia 24/jul e me interesso por GenAI, LLMs e avaliação de model
 
 Resultado esperado: o agente usa a Custom Tool para buscar sessões do dia 24/jul relacionadas a GenAI/LLMs e monta um roteiro em ordem de horário.
 
+## Opcional: conectar com Telegram
+
+O Telegram não é obrigatório: a interface web já funciona assim que a Stack termina. Mas se você quiser conversar pelo celular, dá pra ligar o mesmo assistente num bot do Telegram.
+
+1. Abra o Telegram e procure por `@BotFather`.
+2. Envie `/start` e depois `/newbot`.
+3. Escolha um nome e um username para o bot.
+4. Copie o token retornado.
+5. Na Stack, edite a variável `telegram_bot_token` com esse valor.
+6. Rode **Destroy** e depois **Apply** de novo — a VM sobe já com o Telegram ligado.
+
+Se você já tem SSH configurado (`ssh_public_key` preenchido) e não quer recriar a VM, dá pra ligar sem redeploy:
+
+```bash
+ssh opc@IP_PUBLICO
+sudo sed -i 's#Environment="TELEGRAM_BOT_TOKEN=.*"#Environment="TELEGRAM_BOT_TOKEN=SEU_TOKEN_AQUI"#' /etc/systemd/system/tdc-agent.service
+sudo systemctl daemon-reload
+sudo systemctl restart tdc-agent
+```
+
+Depois de qualquer um dos dois caminhos, procure seu bot no Telegram e mande uma mensagem — ele responde usando o mesmo motor de RAG e Custom Tool do chat web, com histórico próprio por conversa.
+
+> Diferente de um agente autônomo tipo OpenClaw ou Hermes, o Assistente TDC Floripa não tem acesso a shell nem consegue se configurar sozinho a pedido — o Telegram aqui é código já embutido no `server.js`, ligado ou desligado pelo token.
+
 ## Variáveis principais
 
 Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/variables.tf`, se você preferir rodar localmente):
@@ -200,6 +245,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
+| `telegram_bot_token` | Opcional. Token do bot do Telegram, gerado pelo `@BotFather`. Deixe vazio para não ligar o Telegram. |
 
 O auto-preenchimento só acontece porque os nomes `tenancy_ocid` e `region` são reservados pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os dois à mão no `terraform.tfvars`.
 

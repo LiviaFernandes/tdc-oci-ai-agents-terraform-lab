@@ -90,3 +90,10 @@ variable "custom_tool_api_url" {
   type        = string
   default     = "https://tdc-oci-ai-agents-lab.onrender.com"
 }
+
+variable "telegram_bot_token" {
+  description = "Token do bot do Telegram (gerado pelo @BotFather). Opcional - deixe vazio para nao ligar o Telegram; a interface web funciona de qualquer jeito."
+  type        = string
+  default     = ""
+  sensitive   = true
+}

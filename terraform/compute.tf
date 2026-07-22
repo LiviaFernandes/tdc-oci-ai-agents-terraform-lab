@@ -142,6 +142,7 @@ resource "oci_core_instance" "vm" {
         rag_documents_b64   = filebase64("${path.module}/app/rag-documents.json")
         index_html_b64      = filebase64("${path.module}/app/public/index.html")
         system_prompt_b64   = base64encode(var.agent_instruction)
+        telegram_bot_token  = var.telegram_bot_token
       }))
     },
     var.ssh_public_key != "" ? { ssh_authorized_keys = var.ssh_public_key } : {}

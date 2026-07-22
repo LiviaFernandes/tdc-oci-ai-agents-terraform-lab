@@ -8,6 +8,7 @@ const PORT = parseInt(process.env.PORT || "8080", 10);
 const COMPARTMENT_ID = process.env.OCI_COMPARTMENT_ID;
 const MODEL_ID = process.env.MODEL_ID || "meta.llama-3.3-70b-instruct";
 const TOOL_API_URL = process.env.TOOL_API_URL || "https://tdc-oci-ai-agents-lab.onrender.com";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
 // Modelos Cohere usam o formato de chat "COHERE" (documents/tools nativos).
 // Todo o resto (Llama, Grok, Gemini, GPT-OSS...) usa o formato "GENERIC",
@@ -302,3 +303,61 @@ app.post("/chat", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Assistente TDC Floripa ouvindo na porta ${PORT} (modelo ${MODEL_ID})`);
 });
+
+// Telegram e opcional: so liga se TELEGRAM_BOT_TOKEN estiver configurado.
+// Usa long polling (getUpdates), sem precisar de webhook publico. Cada chat
+// do Telegram tem seu proprio historico, igual a interface web.
+if (TELEGRAM_BOT_TOKEN) {
+  const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+  const telegramHistories = new Map();
+
+  async function telegramSendMessage(chatId, text) {
+    await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text })
+    });
+  }
+
+  async function telegramHandleMessage(message) {
+    const chatId = message.chat.id;
+    const text = (message.text || "").trim();
+    if (!text) return;
+
+    const history = telegramHistories.get(chatId) || [];
+    try {
+      const result = await askAssistant(text, history);
+      history.push({ role: "user", text });
+      history.push({ role: "assistant", text: result.text });
+      telegramHistories.set(chatId, history.slice(-12));
+      await telegramSendMessage(chatId, result.text);
+    } catch (err) {
+      console.error("Erro ao responder no Telegram:", err);
+      await telegramSendMessage(chatId, "Desculpa, tive um erro ao responder agora. Tenta de novo em instantes.");
+    }
+  }
+
+  async function telegramPollLoop() {
+    let offset = 0;
+    for (;;) {
+      try {
+        const res = await fetch(`${TELEGRAM_API}/getUpdates?timeout=30&offset=${offset}`);
+        const data = await res.json();
+        if (data.ok) {
+          for (const update of data.result) {
+            offset = update.update_id + 1;
+            if (update.message) {
+              await telegramHandleMessage(update.message);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erro no polling do Telegram:", err);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+  }
+
+  telegramPollLoop();
+  console.log("Bot do Telegram iniciado.");
+}

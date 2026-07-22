@@ -41,6 +41,7 @@ write_files:
       Environment="OCI_COMPARTMENT_ID=${compartment_id}"
       Environment="MODEL_ID=${model_id}"
       Environment="TOOL_API_URL=${custom_tool_api_url}"
+      Environment="TELEGRAM_BOT_TOKEN=${telegram_bot_token}"
       ExecStart=/usr/bin/node /opt/tdc-agent/server.js
       Restart=on-failure
       RestartSec=5
