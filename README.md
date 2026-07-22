@@ -33,8 +33,6 @@ Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, 
 
 ![Arquitetura do Assistente TDC Floripa](docs/architecture.png)
 
-> Fonte do diagrama em `docs/architecture.mmd` (Mermaid), caso queira editar.
-
 Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
 ### Como o agente foi construído
