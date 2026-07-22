@@ -54,16 +54,22 @@ flowchart LR
     style VM fill:#f3f4f6,stroke:#111111,stroke-width:1px,color:#000000
 ```
 
-Como o agente foi montado, por dentro do `server.js`:
+Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
+
+### Como o agente foi construído
+
+O `terraform/app/server.js` é um servidor Express único, sem nenhum framework de agente por trás. Provisionamento e código:
 
 - **Provisionamento**: o `cloud-init` instala Node.js 20 (via módulo do `dnf`), grava o código do app em `/opt/tdc-agent` e sobe um serviço systemd (`tdc-agent.service`) que reinicia sozinho se cair.
-- **O app** é um servidor Express único (`terraform/app/server.js`), sem framework de agente por trás — a "inteligência" de RAG e tool-calling é só a forma como ele monta cada chamada ao modelo.
-- **RAG** não é uma Knowledge Base gerenciada: os documentos (`rag-documents.json`, extraídos do PDF do lab original) entram como texto direto na mensagem de sistema (ou no campo nativo `documents`, se o modelo for Cohere) a cada pergunta.
-- **Custom Tool** é function-calling nativo do modelo: o app declara a tool `consulta_programacao_tdc` na chamada, e quando o modelo decide usá-la, o próprio `server.js` faz a chamada HTTP para a API pública da programação e devolve o resultado pro modelo terminar a resposta.
-- **Autenticação** é por instance principal — a VM tem sua própria identidade (dynamic group + policy), sem precisar guardar API key nenhuma.
-- **Histórico de conversa** vive no cliente (navegador ou Telegram), não no servidor: cada request manda as últimas trocas junto, e o servidor remonta o contexto a cada chamada.
+- **Autenticação**: o app usa o SDK oficial `oci-generativeaiinference`, autenticando com `InstancePrincipalsAuthenticationDetailsProviderBuilder` — a própria VM tem uma identidade (dynamic group + policy), sem precisar guardar API key em lugar nenhum.
 
-Não existe Knowledge Base, Object Storage nem Agent Endpoint gerenciado — a VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
+O resto da "inteligência" é só a forma como cada chamada ao modelo é montada:
+
+- **Dois formatos de chat**: o OCI Generative AI aceita formatos diferentes dependendo do modelo. Modelos Cohere (`cohere.*`) usam o formato nativo `COHERE`, com um campo `documents` pronto pra RAG e tools no estilo `parameterDefinitions`. Todo o resto (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato `GENERIC`, parecido com mensagens da OpenAI (`messages`, papéis `SYSTEM`/`USER`/`ASSISTANT`/`TOOL`), mas com os campos da tool soltos no objeto em vez de aninhados num `function` — uma diferença sutil que já causou um bug real durante os testes deste lab. O app decide qual caminho usar pelo prefixo do `model_id` e tem uma função pra cada um, `askAssistantCohere` e `askAssistantGeneric`.
+- **RAG por injeção de contexto, não Knowledge Base**: os documentos do evento (`rag-documents.json`, extraídos do PDF do lab original) entram como texto dentro da mensagem de sistema a cada pergunta (ou no campo nativo `documents`, no caso do Cohere). Funciona bem porque a base é pequena; uma base grande precisaria de busca de verdade antes de injetar.
+- **Tool-calling em loop**: quando a pergunta é sobre programação, o modelo devolve um pedido de "tool call" em vez de texto. O app chama a API pública com os parâmetros que o modelo pediu, devolve o resultado numa nova mensagem e pergunta de novo ao modelo — até sair uma resposta final, num máximo de 4 idas e voltas pra não travar em loop.
+- **Histórico do lado do cliente**: o servidor não guarda conversa nenhuma em memória própria. O navegador manda as últimas trocas a cada request dentro de `history`, e o servidor remonta a conversa inteira antes de perguntar de novo ao modelo. O Telegram é a exceção: guarda um histórico curto por `chat_id`, enquanto o processo estiver de pé (se a VM reiniciar, zera).
+- **Telegram opcional**: se `TELEGRAM_BOT_TOKEN` estiver definido, um loop de long polling (`getUpdates`) roda em paralelo ao servidor HTTP, chamando a mesma função `askAssistant` usada pelo chat web pra cada mensagem recebida.
 
 A Custom Tool usa a API pública já publicada:
 
