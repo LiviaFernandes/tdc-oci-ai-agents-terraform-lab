@@ -69,7 +69,7 @@ variable "ssh_public_key" {
 variable "model_id" {
   description = "Modelo usado no OCI Generative AI. O catalogo de modelos disponivel varia por regiao - confira em Analytics & AI > Generative AI > Playground quais aparecem para a sua. O app suporta tanto modelos Cohere (cohere.*) quanto os demais (meta.*, xai.*, google.*, openai.*), detectando o formato pelo prefixo do nome."
   type        = string
-  default     = "cohere.command-r-08-2024"
+  default     = "google.gemini-2.5-flash"
 }
 
 variable "agent_instruction" {

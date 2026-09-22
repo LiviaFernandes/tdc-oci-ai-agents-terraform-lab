@@ -6,7 +6,7 @@ const generativeaiinference = require("oci-generativeaiinference");
 
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const COMPARTMENT_ID = process.env.OCI_COMPARTMENT_ID;
-const MODEL_ID = process.env.MODEL_ID || "cohere.command-r-08-2024";
+const MODEL_ID = process.env.MODEL_ID || "google.gemini-2.5-flash";
 const TOOL_API_URL = process.env.TOOL_API_URL;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
