@@ -4,9 +4,9 @@ variable "tenancy_ocid" {
 }
 
 variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao da sessao atual no Console (use sa-saopaulo-1 para este lab)."
+  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao da sessao atual no Console (use us-ashburn-1 para este lab)."
   type        = string
-  default     = "sa-saopaulo-1"
+  default     = "us-ashburn-1"
 }
 
 variable "compartment_name" {

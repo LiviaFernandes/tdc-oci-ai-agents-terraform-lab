@@ -57,7 +57,7 @@ A Custom Tool precisa de uma API de programação do TDC São Paulo 2026 compat�
 
 ## Pré-requisitos
 
-- Conta OCI Trial ativa, com a região **South America (São Paulo)** (`sa-saopaulo-1`) assinada e selecionada no Console. Veja o passo 1 se você ainda não tem uma.
+- Conta OCI Trial ativa, com a região **US East (Ashburn)** (`us-ashburn-1`) assinada e selecionada no Console. Veja o passo 1 se você ainda não tem uma.
 - Acesso ao OCI Console.
 - Permissão para criar compartment, dynamic group, policy, rede e instância. O dono de uma tenancy trial já tem esse acesso por padrão, como administrator.
 - O arquivo zip deste repositório, para subir como Stack no Resource Manager.
@@ -68,14 +68,14 @@ Se você já tem uma tenancy trial, pule para o passo 2.
 
 1. Acesse [oracle.com/cloud/free](https://www.oracle.com/cloud/free/) e clique em **Start for free**.
 2. Preencha os dados pedidos (nome, email, país, telefone) e confirme o cadastro.
-3. Quando for pedida a home region, escolha **South America (São Paulo)** (`sa-saopaulo-1`). Essa escolha é definitiva: depois de criada, a tenancy não muda de home region.
+3. Quando for pedida a home region, escolha **US East (Ashburn)** (`us-ashburn-1`). Essa escolha é definitiva: depois de criada, a tenancy não muda de home region.
 4. A Oracle manda um email confirmando a criação da conta, com o nome da sua tenancy (tenancy name). Guarde esse nome — é ele que você usa para logar, não o email.
 5. Acesse o Console em [cloud.oracle.com](https://cloud.oracle.com/) e faça login informando o tenancy name confirmado por email.
 6. No primeiro login, a OCI pede para configurar autenticação em duas etapas. Baixe um app autenticador no celular, como o Oracle Mobile Authenticator, escaneie o QR code mostrado na tela e confirme o código gerado para concluir o login.
 
 Com a conta criada e o primeiro login feito, siga para o restante do lab.
 
-Se a sua tenancy já foi criada em outra home region, assine **South America (São Paulo)** em **Region Management** e selecione `sa-saopaulo-1` no seletor de região do Console antes de criar a Stack. O Resource Manager usa a região selecionada na sessão atual.
+Se a sua tenancy já foi criada em outra home region, assine **US East (Ashburn)** em **Region Management** e selecione `us-ashburn-1` no seletor de região do Console antes de criar a Stack. O Resource Manager usa a região selecionada na sessão atual.
 
 ## 2. Preparar o pacote da Stack
 
@@ -209,7 +209,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | Variável | Descrição |
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
-| `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão; para este lab, use São Paulo (`sa-saopaulo-1`). |
+| `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão; para este lab, use Ashburn (`us-ashburn-1`). |
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC São Paulo fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo usado no OCI Generative AI. O padrão é `google.gemini-2.5-flash`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |

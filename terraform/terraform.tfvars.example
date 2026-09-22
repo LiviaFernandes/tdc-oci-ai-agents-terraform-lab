@@ -2,7 +2,7 @@
 # Nao commite o terraform.tfvars (ja esta no .gitignore).
 
 tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-region       = "sa-saopaulo-1"
+region       = "us-ashburn-1"
 
 # Nomes com sufixo para evitar conflito com tentativas anteriores na tenancy.
 compartment_name   = "tdc-ai-agents-lab-tdcsp2026"
