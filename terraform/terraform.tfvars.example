@@ -4,5 +4,10 @@
 tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 region       = "us-chicago-1"
 
+# Nomes com sufixo para evitar conflito com tentativas anteriores na tenancy.
+compartment_name   = "tdc-ai-agents-lab-tdcsp2026"
+dynamic_group_name = "tdc-ai-agents-vm-tdcsp2026"
+policy_name        = "tdc-ai-agents-lab-policy-tdcsp2026"
+
 # Opcional: cole sua chave publica SSH aqui se quiser acessar a VM.
 # ssh_public_key = "ssh-ed25519 AAAA..."

@@ -12,7 +12,7 @@ variable "region" {
 variable "compartment_name" {
   description = "Nome do compartment criado do zero para o lab."
   type        = string
-  default     = "tdc-ai-agents-lab"
+  default     = "tdc-ai-agents-lab-tdcsp2026"
 }
 
 variable "compartment_description" {
@@ -23,12 +23,12 @@ variable "compartment_description" {
 variable "dynamic_group_name" {
   description = "Nome do dynamic group que agrupa a VM do lab. A policy do lab e concedida a este dynamic group."
   type        = string
-  default     = "tdc-ai-agents-vm"
+  default     = "tdc-ai-agents-vm-tdcsp2026"
 }
 
 variable "policy_name" {
   type    = string
-  default = "tdc-ai-agents-lab-policy"
+  default = "tdc-ai-agents-lab-policy-tdcsp2026"
 }
 
 variable "vcn_cidr" {
