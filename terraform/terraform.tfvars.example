@@ -2,7 +2,7 @@
 # Nao commite o terraform.tfvars (ja esta no .gitignore).
 
 tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-region       = "sa-saopaulo-1"
+region       = "us-chicago-1"
 
 # Opcional: cole sua chave publica SSH aqui se quiser acessar a VM.
 # ssh_public_key = "ssh-ed25519 AAAA..."
