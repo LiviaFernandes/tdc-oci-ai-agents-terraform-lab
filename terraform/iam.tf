@@ -1,4 +1,5 @@
 resource "oci_identity_compartment" "lab" {
+  provider       = oci.home
   compartment_id = var.tenancy_ocid
   name           = var.compartment_name
   description    = var.compartment_description
@@ -8,6 +9,7 @@ resource "oci_identity_compartment" "lab" {
 # entra automaticamente. E essa identidade que a VM usa (instance
 # principal) para chamar o OCI Generative AI, sem precisar de API key.
 resource "oci_identity_dynamic_group" "vm" {
+  provider       = oci.home
   compartment_id = var.tenancy_ocid
   name           = var.dynamic_group_name
   description    = "VMs do laboratorio TDC AI Agents que podem chamar o OCI Generative AI"
@@ -18,6 +20,7 @@ resource "oci_identity_dynamic_group" "vm" {
 # minimos pra chamada de chat via instance principal: usar o chat e ler
 # metadados do modelo, nada de "manage" no family inteiro.
 resource "oci_identity_policy" "lab_policy" {
+  provider       = oci.home
   compartment_id = var.tenancy_ocid
   name           = var.policy_name
   description    = "Policy do laboratorio TDC AI Agents OCI"

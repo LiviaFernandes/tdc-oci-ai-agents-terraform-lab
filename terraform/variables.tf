@@ -3,8 +3,14 @@ variable "tenancy_ocid" {
   type        = string
 }
 
-variable "region" {
-  description = "Regiao OCI onde o lab vai rodar. Precisa ter OCI Generative AI disponivel. O Resource Manager preenche esta variavel sozinho quando o nome bate exatamente com 'region', com a regiao da sessao atual no Console (use us-ashburn-1 para este lab)."
+variable "deployment_region" {
+  description = "Regiao OCI onde Compute e OCI Generative AI do lab vao rodar. O padrao e Ashburn (us-ashburn-1)."
+  type        = string
+  default     = "us-ashburn-1"
+}
+
+variable "home_region" {
+  description = "Home region da tenancy, usada exclusivamente para recursos de IAM. Para esta tenancy, use Ashburn (us-ashburn-1)."
   type        = string
   default     = "us-ashburn-1"
 }

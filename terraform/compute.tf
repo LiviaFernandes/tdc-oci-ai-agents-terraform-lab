@@ -170,7 +170,7 @@ resource "oci_core_instance" "vm" {
   lifecycle {
     precondition {
       condition     = length(local.ranked_pairs) > 0
-      error_message = "Nenhuma AD em ${var.region} tem capacidade para os shapes candidatos (A4/A1/E4/E5 Flex ou E2.1.Micro). Tente executar novamente mais tarde ou escolha outra regiao."
+      error_message = "Nenhuma AD em ${var.deployment_region} tem capacidade para os shapes candidatos (A4/A1/E4/E5 Flex ou E2.1.Micro). Tente executar novamente mais tarde ou escolha outra regiao."
     }
   }
 }

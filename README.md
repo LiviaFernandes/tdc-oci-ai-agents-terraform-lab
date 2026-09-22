@@ -9,7 +9,7 @@ Este projeto contém o material de apoio para subir, via Terraform, um agente de
 - programação do TDC São Paulo 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
-O objetivo do lab é criar um agente chamado **Assistente TDC São Paulo**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
+O objetivo do lab é criar um agente chamado **Assistente TDC São Paulo**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, confirma a tenancy e as regiões configuradas, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
 
 ## Demo do lab
 
@@ -112,7 +112,7 @@ De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init
 
 ## 4. Preencher as variáveis
 
-O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. As duas variáveis obrigatórias — `tenancy_ocid` e `region` — usam nomes especiais que o Resource Manager reconhece e já vem preenchendo sozinho, com a tenancy e a região da sua sessão atual no Console. Na prática, você não digita nada aqui: só confere se os valores batem com o que você espera.
+O Resource Manager lê o `variables.tf` do pacote e monta um formulário automático na tela seguinte. A variável `tenancy_ocid` é preenchida automaticamente pelo Resource Manager. As regiões já vêm configuradas para Ashburn: mantenha `deployment_region` e `home_region` como `us-ashburn-1` para este lab.
 
 As demais variáveis (tamanho da VM, porta do app, modelo do OCI Generative AI, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
 
@@ -209,7 +209,8 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | Variável | Descrição |
 | --- | --- |
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
-| `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão; para este lab, use Ashburn (`us-ashburn-1`). |
+| `deployment_region` | Região OCI de Compute e OCI Generative AI. Para este lab, use Ashburn (`us-ashburn-1`). |
+| `home_region` | Home region da tenancy, usada para criar compartment, Dynamic Group e policy. Para esta tenancy, use Ashburn (`us-ashburn-1`). |
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC São Paulo fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo usado no OCI Generative AI. O padrão é `google.gemini-2.5-flash`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
@@ -218,7 +219,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
 | `telegram_bot_token` | Opcional. Token do bot do Telegram, gerado pelo `@BotFather`. Deixe vazio para não ligar o Telegram. |
 
-O auto-preenchimento só acontece porque os nomes `tenancy_ocid` e `region` são reservados pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os dois à mão no `terraform.tfvars`.
+O auto-preenchimento só acontece porque o nome `tenancy_ocid` é reservado pelo Resource Manager. Rodando localmente esse mecanismo não existe, então você preenche os valores à mão no `terraform.tfvars`.
 
 ## Custo, sem complicar
 
@@ -248,7 +249,7 @@ Se preferir não usar o Console, dá para rodar a mesma pasta com o Terraform lo
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
-# preencha tenancy_ocid e region no terraform.tfvars
+# preencha tenancy_ocid, deployment_region e home_region no terraform.tfvars
 terraform init
 terraform plan
 terraform apply
