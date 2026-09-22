@@ -210,7 +210,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC São Paulo fica escutando, e usada no `chat_url`. |
-| `model_id` | Modelo usado no OCI Generative AI. O padrão é `meta.llama-3.3-70b-instruct`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
+| `model_id` | Modelo usado no OCI Generative AI. O padrão é `cohere.command-r-08-2024`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
 | `custom_tool_api_url` | URL base obrigatória da API de programação do TDC São Paulo 2026, compatível com `POST /sessions/search`. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
