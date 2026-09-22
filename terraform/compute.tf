@@ -5,10 +5,12 @@
 # evita o erro "Out of host capacity" sem exigir tentativa e erro manual.
 locals {
   shape_priority = [
-    "VM.Standard.A4.Flex",
-    "VM.Standard.A1.Flex",
-    "VM.Standard.E4.Flex",
-    "VM.Standard.E5.Flex",
+    { name = "VM.Standard.A4.Flex", is_flex = true },
+    { name = "VM.Standard.A1.Flex", is_flex = true },
+    { name = "VM.Standard.E4.Flex", is_flex = true },
+    { name = "VM.Standard.E5.Flex", is_flex = true },
+    # Always Free, usado como ultimo recurso quando nao houver Flex disponivel.
+    { name = "VM.Standard.E2.1.Micro", is_flex = false },
   ]
 }
 
@@ -33,7 +35,7 @@ locals {
   ad_supported_shapes = [
     for ad_index, ad in data.oci_identity_availability_domains.ads.availability_domains : [
       for wanted_shape in local.shape_priority : wanted_shape
-      if contains([for shape in data.oci_core_shapes.by_ad[ad_index].shapes : shape.name], wanted_shape)
+      if contains([for shape in data.oci_core_shapes.by_ad[ad_index].shapes : shape.name], wanted_shape.name)
     ]
   ]
 
@@ -56,11 +58,15 @@ resource "oci_core_compute_capacity_report" "by_ad" {
     for_each = local.ad_capacity_inputs[count.index].shapes
 
     content {
-      instance_shape = shape_availabilities.value
+      instance_shape = shape_availabilities.value.name
 
-      instance_shape_config {
-        ocpus         = var.instance_ocpus
-        memory_in_gbs = var.instance_memory_in_gbs
+      dynamic "instance_shape_config" {
+        for_each = shape_availabilities.value.is_flex ? [1] : []
+
+        content {
+          ocpus         = var.instance_ocpus
+          memory_in_gbs = var.instance_memory_in_gbs
+        }
       }
     }
   }
@@ -72,6 +78,7 @@ locals {
       for shape in report.shape_availabilities : {
         availability_domain = report.availability_domain
         shape_name          = shape.instance_shape
+        is_flex             = contains([for candidate in local.shape_priority : candidate.name if candidate.is_flex], shape.instance_shape)
         available_count     = try(tonumber(shape.available_count), 0)
         availability_status = upper(tostring(try(shape.availability_status, "")))
       }
@@ -88,11 +95,17 @@ locals {
   ranked_pairs = flatten([
     for wanted_shape in local.shape_priority : [
       for pair in local.available_capacity_pairs : pair
-      if pair.shape_name == wanted_shape
+      if pair.shape_name == wanted_shape.name
     ]
   ])
 
-  selected_pair  = local.ranked_pairs[0]
+  # O fallback permite que a precondition abaixo emita uma mensagem util,
+  # em vez de falhar com "Invalid index" quando nenhuma AD tiver capacidade.
+  selected_pair = try(local.ranked_pairs[0], {
+    availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+    shape_name          = local.shape_priority[0].name
+    is_flex             = local.shape_priority[0].is_flex
+  })
   selected_shape = local.selected_pair.shape_name
   selected_ad    = local.selected_pair.availability_domain
 }
@@ -112,9 +125,13 @@ resource "oci_core_instance" "vm" {
   display_name        = "tdc-ai-agents-vm"
   shape               = local.selected_shape
 
-  shape_config {
-    ocpus         = var.instance_ocpus
-    memory_in_gbs = var.instance_memory_in_gbs
+  dynamic "shape_config" {
+    for_each = local.selected_pair.is_flex ? [1] : []
+
+    content {
+      ocpus         = var.instance_ocpus
+      memory_in_gbs = var.instance_memory_in_gbs
+    }
   }
 
   source_details {
@@ -149,4 +166,11 @@ resource "oci_core_instance" "vm" {
   )
 
   depends_on = [oci_identity_policy.lab_policy]
+
+  lifecycle {
+    precondition {
+      condition     = length(local.ranked_pairs) > 0
+      error_message = "Nenhuma AD em ${var.region} tem capacidade para os shapes candidatos (A4/A1/E4/E5 Flex ou E2.1.Micro). Tente executar novamente mais tarde ou escolha outra regiao."
+    }
+  }
 }

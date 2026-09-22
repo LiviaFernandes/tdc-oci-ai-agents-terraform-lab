@@ -116,7 +116,7 @@ O Resource Manager lê o `variables.tf` do pacote e monta um formulário automá
 
 As demais variáveis (tamanho da VM, porta do app, modelo do OCI Generative AI, system prompt, URL da Custom Tool) já vêm com valor padrão. Não precisa mexer nelas para rodar o lab. O campo `ssh_public_key` é opcional — só preencha se quiser acessar a VM por SSH pra ver logs.
 
-Não existe variável de shape: o Terraform consulta um Compute Capacity Report em cada Availability Domain da região e escolhe sozinho o primeiro shape com capacidade confirmada, testando nesta ordem: `VM.Standard.A4.Flex`, `VM.Standard.A1.Flex`, `VM.Standard.E4.Flex`, `VM.Standard.E5.Flex`. Isso evita o erro `Out of host capacity`, comum em tenancies trial onde a quota disponível varia de conta pra conta.
+Não existe variável de shape: o Terraform consulta um Compute Capacity Report em cada Availability Domain da região e escolhe sozinho o primeiro shape com capacidade confirmada, testando nesta ordem: `VM.Standard.A4.Flex`, `VM.Standard.A1.Flex`, `VM.Standard.E4.Flex`, `VM.Standard.E5.Flex` e `VM.Standard.E2.1.Micro` (Always Free). Isso evita o erro `Out of host capacity`, comum em tenancies trial onde a quota disponível varia de conta pra conta. Se não houver capacidade em nenhuma AD, o apply informa isso claramente; tente de novo mais tarde ou escolha outra região.
 
 Clique em **Next**, revise o resumo e siga em frente.
 

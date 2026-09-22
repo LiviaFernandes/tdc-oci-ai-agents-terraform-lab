@@ -49,7 +49,7 @@ variable "instance_ocpus" {
 }
 
 variable "instance_memory_in_gbs" {
-  description = "Memoria da VM em GB. 6 GB por OCPU e uma proporcao segura e compativel com os shapes candidatos (A4.Flex, A1.Flex, E4.Flex, E5.Flex)."
+  description = "Memoria da VM em GB para os shapes Flex. O fallback Always Free VM.Standard.E2.1.Micro usa sua configuracao fixa."
   type        = number
   default     = 6
 }
