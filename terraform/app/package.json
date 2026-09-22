@@ -1,8 +1,8 @@
 {
-  "name": "assistente-tdc-floripa",
+  "name": "assistente-tdc-sao-paulo",
   "version": "1.0.0",
   "private": true,
-  "description": "Assistente TDC Floripa - RAG + Custom Tool sobre OCI Generative AI",
+  "description": "Assistente TDC Sao Paulo - RAG + Custom Tool sobre OCI Generative AI",
   "main": "server.js",
   "engines": {
     "node": ">=18"

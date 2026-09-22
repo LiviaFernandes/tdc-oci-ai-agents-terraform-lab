@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Assistente TDC Floripa</title>
+<title>Assistente TDC Sao Paulo</title>
 <style>
   :root { color-scheme: light dark; }
   * { box-sizing: border-box; }
@@ -68,11 +68,11 @@
 </style>
 </head>
 <body>
-  <h1>Assistente TDC Floripa</h1>
+  <h1>Assistente TDC Sao Paulo</h1>
   <p class="subtitle">RAG + Custom Tool sobre OCI Generative AI, rodando nesta VM.</p>
   <div id="log"></div>
   <form id="chat-form">
-    <input id="message" type="text" placeholder="Pergunte sobre o TDC Floripa 2026..." autocomplete="off" autofocus />
+    <input id="message" type="text" placeholder="Pergunte sobre o TDC Sao Paulo 2026..." autocomplete="off" autofocus />
     <button type="submit" id="send-btn">Enviar</button>
   </form>
 
@@ -116,7 +116,7 @@
 
       const label = document.createElement('div');
       label.className = 'label';
-      label.textContent = cls === 'user' ? 'Você' : cls === 'error' ? 'Erro' : 'Assistente TDC Floripa';
+      label.textContent = cls === 'user' ? 'Você' : cls === 'error' ? 'Erro' : 'Assistente TDC Sao Paulo';
       turn.appendChild(label);
 
       const msg = document.createElement('div');
@@ -136,7 +136,7 @@
     function addTypingIndicator() {
       const turn = document.createElement('div');
       turn.className = 'turn bot typing';
-      turn.innerHTML = '<div class="label">Assistente TDC Floripa</div>' +
+      turn.innerHTML = '<div class="label">Assistente TDC Sao Paulo</div>' +
         '<div class="msg"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
       log.appendChild(turn);
       window.scrollTo(0, document.body.scrollHeight);

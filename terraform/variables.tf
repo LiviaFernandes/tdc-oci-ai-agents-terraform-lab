@@ -55,7 +55,7 @@ variable "instance_memory_in_gbs" {
 }
 
 variable "app_port" {
-  description = "Porta onde o Assistente TDC Floripa fica escutando. E a mesma porta liberada na security list e usada no chat_url."
+  description = "Porta onde o Assistente TDC Sao Paulo fica escutando. E a mesma porta liberada na security list e usada no chat_url."
   type        = number
   default     = 8080
 }
@@ -76,7 +76,7 @@ variable "agent_instruction" {
   description = "Instrucoes do agente (system prompt). Substitui o texto padrao."
   type        = string
   default     = <<-EOT
-    Voce e o Assistente TDC Floripa, um agente simpatico e prestativo para orientar participantes sobre o TDC Floripa 2026.
+    Voce e o Assistente TDC Sao Paulo, um agente simpatico e prestativo para orientar participantes sobre o TDC Sao Paulo 2026.
     Responda em portugues brasileiro, de forma clara, objetiva e educada.
     Cumprimentos e conversa informal (oi, ola, bom dia, tudo bem, obrigado) devem receber uma resposta natural e simpatica, contando brevemente com o que voce pode ajudar. Nunca diga que precisa chamar uma funcao ou tool para responder isso, e nunca recuse uma mensagem so porque ela nao pede uma acao especifica.
     Use os documentos de contexto para perguntas gerais sobre o evento, jornadas, formato, FAQ, regras e links oficiais.
@@ -86,9 +86,9 @@ variable "agent_instruction" {
 }
 
 variable "custom_tool_api_url" {
-  description = "URL base da API de programacao usada pela Custom Tool. Por padrao usa a API ja publicada do lab original (tdc-oci-ai-agents-lab); troque se voce publicar sua propria copia."
+  description = "URL base da API de programacao do TDC Sao Paulo 2026 usada pela Custom Tool. Informe uma API compativel com o endpoint /sessions/search."
   type        = string
-  default     = "https://tdc-oci-ai-agents-lab.onrender.com"
+  default     = ""
 }
 
 variable "telegram_bot_token" {

@@ -7,7 +7,7 @@ const generativeaiinference = require("oci-generativeaiinference");
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const COMPARTMENT_ID = process.env.OCI_COMPARTMENT_ID;
 const MODEL_ID = process.env.MODEL_ID || "meta.llama-3.3-70b-instruct";
-const TOOL_API_URL = process.env.TOOL_API_URL || "https://tdc-oci-ai-agents-lab.onrender.com";
+const TOOL_API_URL = process.env.TOOL_API_URL;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
 // Modelos Cohere usam o formato de chat "COHERE" (documents/tools nativos).
@@ -19,7 +19,7 @@ const IS_COHERE_MODEL = MODEL_ID.toLowerCase().startsWith("cohere.");
 const ragDocuments = require("./rag-documents.json");
 const RAG_CONTEXT_TEXT = ragDocuments.map((doc) => `## ${doc.title}\n${doc.snippet}`).join("\n\n");
 
-const DEFAULT_SYSTEM_PROMPT = `Voce e o Assistente TDC Floripa, um agente simpatico e prestativo para orientar participantes sobre o TDC Floripa 2026.
+const DEFAULT_SYSTEM_PROMPT = `Voce e o Assistente TDC Sao Paulo, um agente simpatico e prestativo para orientar participantes sobre o TDC Sao Paulo 2026.
 Responda em portugues brasileiro, de forma clara, objetiva e educada.
 Cumprimentos e conversa informal (oi, ola, bom dia, tudo bem, obrigado) devem receber uma resposta natural e simpatica, contando brevemente com o que voce pode ajudar. Nunca diga que precisa chamar uma funcao ou tool para responder isso, e nunca recuse uma mensagem so porque ela nao pede uma acao especifica.
 Use os documentos de contexto para perguntas gerais sobre o evento, jornadas, formato, FAQ, regras e links oficiais.
@@ -35,7 +35,7 @@ const SYSTEM_PROMPT = fs.existsSync(SYSTEM_PROMPT_PATH)
 
 const TOOL_NAME = "consulta_programacao_tdc";
 const TOOL_DESCRIPTION =
-  "Busca sessoes, palestras, horarios, trilhas e speakers da programacao real do TDC Floripa 2026. Use sempre que a pergunta for sobre agenda, programacao, horarios, palestras, trilhas especificas, speakers, nomes de pessoas ou busca por termo na programacao.";
+  "Busca sessoes, palestras, horarios, trilhas e speakers da programacao do TDC Sao Paulo 2026. Use sempre que a pergunta for sobre agenda, programacao, horarios, palestras, trilhas especificas, speakers, nomes de pessoas ou busca por termo na programacao.";
 
 // Definicao da tool no formato Cohere (parameterDefinitions).
 const cohereTools = [
@@ -49,12 +49,12 @@ const cohereTools = [
         isRequired: false
       },
       speaker: {
-        description: "Nome do speaker ou parte do nome, por exemplo Ana Lindiner ou Livia Rodrigues.",
+        description: "Nome do speaker ou parte do nome.",
         type: "str",
         isRequired: false
       },
       day: {
-        description: "Dia da programacao, por exemplo 22/jul, 23/jul ou 24/jul.",
+        description: "Dia da programacao, por exemplo 23/set, 24/set ou 25/set.",
         type: "str",
         isRequired: false
       },
@@ -85,8 +85,8 @@ const genericTools = [
       type: "object",
       properties: {
         q: { type: "string", description: "Termo de busca geral, como agentes, IA, arquitetura, Java, titulo ou nome de uma pessoa." },
-        speaker: { type: "string", description: "Nome do speaker ou parte do nome, por exemplo Ana Lindiner ou Livia Rodrigues." },
-        day: { type: "string", description: "Dia da programacao, por exemplo 22/jul, 23/jul ou 24/jul." },
+        speaker: { type: "string", description: "Nome do speaker ou parte do nome." },
+        day: { type: "string", description: "Dia da programacao, por exemplo 23/set, 24/set ou 25/set." },
         track: { type: "string", description: "Nome ou parte do nome da trilha." },
         limit: { type: "integer", description: "Quantidade maxima de resultados." }
       },
@@ -301,7 +301,7 @@ app.post("/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Assistente TDC Floripa ouvindo na porta ${PORT} (modelo ${MODEL_ID})`);
+  console.log(`Assistente TDC Sao Paulo ouvindo na porta ${PORT} (modelo ${MODEL_ID})`);
 });
 
 // Telegram e opcional: so liga se TELEGRAM_BOT_TOKEN estiver configurado.

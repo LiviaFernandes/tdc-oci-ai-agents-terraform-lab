@@ -4,34 +4,36 @@ Este projeto contém o material de apoio para subir, via Terraform, um agente de
 
 - OCI Generative AI (inferencia direta, com modelos como Meta Llama, Cohere Command, xAI Grok ou Google Gemini, dependendo da regiao);
 - uma VM que roda o agente, no estilo IaaS;
-- RAG por injeção de contexto direto na chamada de chat, com a base do TDC Floripa 2026;
-- Custom Tool via function-calling nativo do modelo, chamando a API pública já preparada;
-- programação real do TDC Floripa 2026 como dataset estruturado da tool;
+- RAG por injeção de contexto direto na chamada de chat, com a base do TDC São Paulo 2026;
+- Custom Tool via function-calling nativo do modelo, chamando uma API de programação configurada na Stack;
+- programação do TDC São Paulo 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
-O objetivo do lab é criar um agente chamado **Assistente TDC Floripa**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
+O objetivo do lab é criar um agente chamado **Assistente TDC São Paulo**, capaz de responder perguntas gerais sobre o evento usando RAG e consultar programação, horários, sessões e speakers usando uma tool. Uma VM sobe, instala um app Node.js leve, e esse app conversa direto com o OCI Generative AI usando a identidade da própria instância (instance principal), sem precisar de API key. Você sobe uma Stack no Resource Manager, que já vem com tenancy e região preenchidas automaticamente pela sua sessão, espera alguns minutos e recebe uma URL pronta para conversar com o agente.
 
 ## Demo do lab
 
 O agente responde perguntas como:
 
 ```text
-Quando acontece o TDC Floripa 2026?
+Quando acontece o TDC São Paulo 2026?
 ```
 
 ```text
-Quais trilhas existem no dia 22 de julho?
+Quais trilhas existem no dia 23 de setembro?
 ```
 
 ```text
-Quais palestras a Livia Rodrigues vai fazer?
+Quais sessões falam sobre agentes de IA?
 ```
 
 Perguntas sobre conceitos gerais, jornadas, formato, FAQ e regras usam **RAG**, porque a resposta está nos documentos de contexto que o app carrega junto com cada pergunta. Perguntas sobre busca estruturada de sessões, speakers, trilhas por dia e filtros usam a **Custom Tool**, porque dependem de uma consulta em tempo real na API de programação.
 
 ## Arquitetura
 
-![Arquitetura do Assistente TDC Floripa](docs/architecture.png)
+![Arquitetura do Assistente TDC São Paulo](docs/architecture.png)
+
+*Versão editável: [docs/architecture.pptx](docs/architecture.pptx).*
 
 A VM tem IP público porque é ela quem serve o chat, e o egress para a API de programação e para o OCI Generative AI sai pelo Internet Gateway da subnet pública.
 
@@ -51,13 +53,7 @@ Alguns detalhes de implementação, pra quem quiser abrir o código:
 - **Histórico vive no cliente**: o navegador manda as últimas trocas a cada request; o Telegram guarda por `chat_id` enquanto o processo estiver de pé.
 - **Autenticação** é por instance principal — a VM tem identidade própria (dynamic group + policy), sem API key guardada em lugar nenhum.
 
-A Custom Tool usa a API pública já publicada:
-
-```text
-https://tdc-oci-ai-agents-lab.onrender.com
-```
-
-Se você quiser apontar para a sua própria cópia da API, troque a variável `custom_tool_api_url` na tela de variáveis da Stack.
+A Custom Tool precisa de uma API de programação do TDC São Paulo 2026 compatível com o endpoint `POST /sessions/search`. Informe a URL dessa API na variável `custom_tool_api_url` da Stack.
 
 ## Pré-requisitos
 
@@ -97,7 +93,7 @@ cd tdc-oci-ai-agents-terraform-lab/terraform
 zip -r ../tdc-ai-agents-trial.zip .
 ```
 
-De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init.yaml.tftpl` e a pasta `app/` (o código do Assistente TDC Floripa) na raiz do pacote, do jeito que o Resource Manager espera.
+De qualquer uma das duas formas, o zip fica com os arquivos `.tf`, o `cloud-init.yaml.tftpl` e a pasta `app/` (o código do Assistente TDC São Paulo) na raiz do pacote, do jeito que o Resource Manager espera.
 
 ## 3. Criar a Stack
 
@@ -133,7 +129,7 @@ compartment tdc-ai-agents-lab
 dynamic group tdc-ai-agents-vm
 policy no root da tenancy, autorizando a VM a chamar o OCI Generative AI
 VCN com subnet publica e Internet Gateway
-a VM, com o Assistente TDC Floripa instalado via cloud-init
+a VM, com o Assistente TDC São Paulo instalado via cloud-init
 ```
 
 Costuma levar uns 5 minutos, a maior parte do tempo é o boot da VM e a instalação do Node.js e das dependências do app. Quando o status da Stack virar **Succeeded**, o lab está pronto.
@@ -153,7 +149,7 @@ Abra no navegador e comece a conversar.
 ### Teste 1: RAG com informação geral do evento
 
 ```text
-O que são as Jornadas TDC e como elas ajudam uma pessoa a escolher melhor a experiência dela no TDC Floripa 2026?
+O que são as Jornadas TDC e como elas ajudam uma pessoa a escolher melhor a experiência dela no TDC São Paulo 2026?
 ```
 
 Resultado esperado: resposta conceitual sobre Jornadas TDC e formato do evento, vinda dos documentos de contexto.
@@ -161,10 +157,10 @@ Resultado esperado: resposta conceitual sobre Jornadas TDC e formato do evento, 
 ### Teste 2: Custom Tool com speaker específica
 
 ```text
-Quais palestras a Livia Rodrigues vai fazer?
+Quais sessões do TDC São Paulo 2026 falam sobre agentes de IA?
 ```
 
-Resultado esperado: resposta com as sessões da Livia Rodrigues Fernandes Silva, vinda de uma chamada da Custom Tool.
+Resultado esperado: resposta com as sessões encontradas na programação, vinda de uma chamada da Custom Tool.
 
 ### Teste 3: RAG + Custom Tool na mesma resposta
 
@@ -177,10 +173,10 @@ Resultado esperado: a primeira parte da resposta vem do RAG, explicando organiza
 ### Teste 4: roteiro personalizado
 
 ```text
-Tenho acesso ao dia 24/jul e me interesso por GenAI, LLMs e avaliação de modelos. Monte um roteiro objetivo para mim com as sessões mais relevantes, horários e trilha.
+Tenho acesso ao dia 25/set e me interesso por GenAI, LLMs e avaliação de modelos. Monte um roteiro objetivo para mim com as sessões mais relevantes, horários e trilha.
 ```
 
-Resultado esperado: o agente usa a Custom Tool para buscar sessões do dia 24/jul relacionadas a GenAI/LLMs e monta um roteiro em ordem de horário.
+Resultado esperado: o agente usa a Custom Tool para buscar sessões do dia 25/set relacionadas a GenAI/LLMs e monta um roteiro em ordem de horário.
 
 ## Opcional: conectar com Telegram
 
@@ -213,9 +209,9 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `tenancy_ocid` | OCID da sua tenancy. Usado para criar o compartment e a policy no root. Auto-preenchida pelo Resource Manager. |
 | `region` | Região OCI com OCI Generative AI disponível. Auto-preenchida pelo Resource Manager com a região da sua sessão (São Paulo, se foi a home region escolhida no passo 1). |
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
-| `app_port` | Porta onde o Assistente TDC Floripa fica escutando, e usada no `chat_url`. |
+| `app_port` | Porta onde o Assistente TDC São Paulo fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo usado no OCI Generative AI. O padrão é `meta.llama-3.3-70b-instruct`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
-| `custom_tool_api_url` | URL base da API de programação usada pela Custom Tool. |
+| `custom_tool_api_url` | URL base obrigatória da API de programação do TDC São Paulo 2026, compatível com `POST /sessions/search`. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
 | `telegram_bot_token` | Opcional. Token do bot do Telegram, gerado pelo `@BotFather`. Deixe vazio para não ligar o Telegram. |
