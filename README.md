@@ -5,7 +5,7 @@ Este projeto contém o material de apoio para subir, via Terraform, um agente de
 - OCI Generative AI (inferencia direta, com modelos como Meta Llama, Cohere Command, xAI Grok ou Google Gemini, dependendo da regiao);
 - uma VM que roda o agente, no estilo IaaS;
 - RAG por injeção de contexto direto na chamada de chat, com a base do TDC São Paulo 2026;
-- Custom Tool via function-calling nativo do modelo, chamando uma API de programação configurada na Stack;
+- Custom Tool via function-calling nativo do modelo, consultando a agenda oficial do TDC São Paulo 2026;
 - programação do TDC São Paulo 2026 como dataset estruturado da tool;
 - Terraform, via Resource Manager Stack, para provisionar tudo de uma vez.
 
@@ -53,7 +53,7 @@ Alguns detalhes de implementação, pra quem quiser abrir o código:
 - **Histórico vive no cliente**: o navegador manda as últimas trocas a cada request; o Telegram guarda por `chat_id` enquanto o processo estiver de pé.
 - **Autenticação** é por instance principal — a VM tem identidade própria (dynamic group + policy), sem API key guardada em lugar nenhum.
 
-A Custom Tool precisa de uma API de programação do TDC São Paulo 2026 compatível com o endpoint `POST /sessions/search`. Informe a URL dessa API na variável `custom_tool_api_url` da Stack.
+A Custom Tool consulta o endpoint local `POST /sessions/search`, servido pela própria VM. Na primeira busca, ele carrega e mantém em memória a agenda oficial do TDC São Paulo 2026. A variável `custom_tool_api_url` é opcional e só deve ser preenchida para substituir essa fonte por uma API externa compatível.
 
 ## Pré-requisitos
 
@@ -214,7 +214,7 @@ Estas são as variáveis que aparecem no formulário da Stack (ou em `terraform/
 | `instance_ocpus`, `instance_memory_in_gbs` | Tamanho da VM. O padrão (1 OCPU, 6 GB) já é suficiente, porque o trabalho pesado roda no OCI Generative AI, não na VM. |
 | `app_port` | Porta onde o Assistente TDC São Paulo fica escutando, e usada no `chat_url`. |
 | `model_id` | Modelo usado no OCI Generative AI. O padrão é `google.gemini-2.5-flash`. O catálogo varia por região — confira em **Analytics & AI > Generative AI > Playground** quais modelos aparecem para a sua. O app detecta o formato de chamada pelo prefixo do nome: `cohere.*` usa o formato nativo Cohere, qualquer outro (`meta.*`, `xai.*`, `google.*`, `openai.*`) usa o formato genérico. |
-| `custom_tool_api_url` | URL base obrigatória da API de programação do TDC São Paulo 2026, compatível com `POST /sessions/search`. |
+| `custom_tool_api_url` | URL base opcional de uma API externa de programação. Vazia, a VM consulta a agenda oficial do TDC São Paulo 2026. |
 | `agent_instruction` | System prompt do agente, o que ele deve e não deve fazer. |
 | `ssh_public_key` | Opcional. Sua chave pública SSH, para acessar a VM e ver logs. |
 | `telegram_bot_token` | Opcional. Token do bot do Telegram, gerado pelo `@BotFather`. Deixe vazio para não ligar o Telegram. |

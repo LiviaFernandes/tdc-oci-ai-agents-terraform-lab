@@ -92,7 +92,7 @@ variable "agent_instruction" {
 }
 
 variable "custom_tool_api_url" {
-  description = "URL base da API de programacao do TDC Sao Paulo 2026 usada pela Custom Tool. Informe uma API compativel com o endpoint /sessions/search."
+  description = "URL opcional de uma API externa de programacao. Deixe vazia para usar a agenda oficial do TDC Sao Paulo 2026 pelo endpoint /sessions/search da propria VM."
   type        = string
   default     = ""
 }

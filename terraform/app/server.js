@@ -7,7 +7,9 @@ const generativeaiinference = require("oci-generativeaiinference");
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const COMPARTMENT_ID = process.env.OCI_COMPARTMENT_ID;
 const MODEL_ID = process.env.MODEL_ID || "google.gemini-2.5-flash";
-const TOOL_API_URL = process.env.TOOL_API_URL;
+// Por padrao, a tool consulta o endpoint local servido pela propria VM. Uma
+// URL externa continua opcional para quem quiser substituir o dataset local.
+const TOOL_API_URL = process.env.TOOL_API_URL || `http://127.0.0.1:${PORT}`;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
 // Modelos Cohere usam o formato de chat "COHERE" (documents/tools nativos).
@@ -18,6 +20,7 @@ const IS_COHERE_MODEL = MODEL_ID.toLowerCase().startsWith("cohere.");
 
 const ragDocuments = require("./rag-documents.json");
 const RAG_CONTEXT_TEXT = ragDocuments.map((doc) => `## ${doc.title}\n${doc.snippet}`).join("\n\n");
+const OFFICIAL_AGENDA_URL = "https://thedevconf.com/tdc/2026/sao-paulo/agenda";
 
 const DEFAULT_SYSTEM_PROMPT = `Voce e o Assistente TDC Sao Paulo, um agente simpatico e prestativo para orientar participantes sobre o TDC Sao Paulo 2026.
 Responda em portugues brasileiro, de forma clara, objetiva e educada.
@@ -116,10 +119,110 @@ async function callProgramacaoTool(parameters) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(parameters || {})
     });
-    return await response.json();
+    const result = await response.json();
+    if (!response.ok) {
+      return { error: result.error || `API de programacao retornou HTTP ${response.status}` };
+    }
+    return result;
   } catch (err) {
     return { error: `Falha ao chamar a API de programacao: ${err.message}` };
   }
+}
+
+function decodeHtml(value) {
+  const entities = {
+    amp: "&", quot: "\"", apos: "'", lt: "<", gt: ">",
+    aacute: "á", agrave: "à", atilde: "ã", acirc: "â", ccedil: "ç",
+    eacute: "é", ecirc: "ê", iacute: "í", oacute: "ó", ocirc: "ô",
+    otilde: "õ", uacute: "ú"
+  };
+  return String(value || "").replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (match, entity) => {
+    if (entity.startsWith("#")) {
+      const radix = entity[1].toLowerCase() === "x" ? 16 : 10;
+      return String.fromCodePoint(parseInt(entity.slice(radix === 16 ? 2 : 1), radix));
+    }
+    const decoded = entities[entity.toLowerCase()];
+    return decoded ? (entity[0] === entity[0].toUpperCase() ? decoded.toUpperCase() : decoded) : match;
+  }).replace(/\s+/g, " ").trim();
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function dateFromToolDay(day) {
+  const match = String(day || "").match(/(?:^|\D)(23|24|25)(?:\D|$)/);
+  return match ? `2026/09/${match[1]}` : null;
+}
+
+let sessionsPromise;
+
+async function getSessions() {
+  if (!sessionsPromise) {
+    sessionsPromise = (async () => {
+      const response = await fetch(OFFICIAL_AGENDA_URL);
+      if (!response.ok) throw new Error(`agenda oficial retornou HTTP ${response.status}`);
+      const html = await response.text();
+      const match = html.match(/<textarea[^>]*id="jack"[^>]*>([\s\S]*?)<\/textarea>/);
+      if (!match) throw new Error("dataset da agenda nao encontrado na pagina oficial");
+      return JSON.parse(match[1].trim()).map((event) => ({
+        title: decodeHtml(event.titulo),
+        track: decodeHtml(event.trilha),
+        type: decodeHtml(event.tipo),
+        date: event.data,
+        start: event.horarioInicio,
+        end: event.horarioTermino,
+        room: decodeHtml(event.sala),
+        speakers: (event.palestrantes || []).map((speaker) => decodeHtml(speaker.nome)).filter(Boolean)
+      }));
+    })().catch((err) => {
+      sessionsPromise = null;
+      throw err;
+    });
+  }
+  return sessionsPromise;
+}
+
+async function searchSessions(parameters = {}) {
+  const q = normalizeSearchText(parameters.q);
+  const speaker = normalizeSearchText(parameters.speaker);
+  const track = normalizeSearchText(parameters.track);
+  const date = dateFromToolDay(parameters.day);
+  const limit = Math.min(Math.max(Number.parseInt(parameters.limit, 10) || 20, 1), 50);
+
+  const results = (await getSessions())
+    .filter((session) => {
+      const searchable = normalizeSearchText([
+        session.title,
+        session.track,
+        session.type,
+        session.room,
+        ...session.speakers
+      ].join(" "));
+      return (!q || searchable.includes(q)) &&
+        (!speaker || normalizeSearchText(session.speakers.join(" ")).includes(speaker)) &&
+        (!track || normalizeSearchText(session.track).includes(track)) &&
+        (!date || session.date === date);
+    })
+    .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
+
+  return {
+    filters: { q: parameters.q || null, speaker: parameters.speaker || null, day: parameters.day || null, track: parameters.track || null, limit },
+    count: results.length,
+    results: results.slice(0, limit).map((session) => ({
+      title: session.title,
+      date: `${session.date.slice(8)}/set`,
+      time: `${session.start} às ${session.end}`,
+      track: session.track,
+      speakers: session.speakers,
+      type: session.type,
+      room: session.room,
+      source_url: "https://thedevconf.com/tdc/2026/sao-paulo/agenda"
+    }))
+  };
 }
 
 async function runToolCall(name, parameters) {
@@ -276,6 +379,15 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", model: MODEL_ID });
+});
+
+app.post("/sessions/search", async (req, res) => {
+  try {
+    res.json(await searchSessions(req.body || {}));
+  } catch (err) {
+    console.error("Erro ao carregar agenda oficial:", err.message);
+    res.status(502).json({ error: `Falha ao consultar a agenda oficial: ${err.message}` });
+  }
 });
 
 app.post("/chat", async (req, res) => {
