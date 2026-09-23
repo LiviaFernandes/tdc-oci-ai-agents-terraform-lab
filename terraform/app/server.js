@@ -7,6 +7,9 @@ const generativeaiinference = require("oci-generativeaiinference");
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const COMPARTMENT_ID = process.env.OCI_COMPARTMENT_ID;
 const MODEL_ID = process.env.MODEL_ID || "google.gemini-2.5-flash";
+// O endpoint de inferencia precisa ser o da mesma regiao da VM/modelo. Nao
+// deixamos o SDK escolher implicitamente para evitar chamadas a outra regiao.
+const OCI_REGION = process.env.OCI_REGION || "us-ashburn-1";
 // Por padrao, a tool consulta o endpoint local servido pela propria VM. Uma
 // URL externa continua opcional para quem quiser substituir o dataset local.
 const TOOL_API_URL = process.env.TOOL_API_URL || `http://127.0.0.1:${PORT}`;
@@ -105,7 +108,8 @@ async function getClient() {
     clientPromise = (async () => {
       const provider = await new common.InstancePrincipalsAuthenticationDetailsProviderBuilder().build();
       return new generativeaiinference.GenerativeAiInferenceClient({
-        authenticationDetailsProvider: provider
+        authenticationDetailsProvider: provider,
+        serviceEndpoint: `https://inference.generativeai.${OCI_REGION}.oci.oraclecloud.com`
       });
     })();
   }

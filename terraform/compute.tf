@@ -153,6 +153,7 @@ resource "oci_core_instance" "vm" {
         app_port            = var.app_port
         compartment_id      = oci_identity_compartment.lab.id
         model_id            = var.model_id
+        deployment_region   = var.deployment_region
         custom_tool_api_url = var.custom_tool_api_url
         server_js_b64       = filebase64("${path.module}/app/server.js")
         package_json_b64    = filebase64("${path.module}/app/package.json")
